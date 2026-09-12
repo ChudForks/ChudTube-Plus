@@ -443,10 +443,6 @@ function render() {
   const sourceLabel = synced ? "Synced" : "Unsynced";
 
   root.innerHTML = `
-    <div class="ctp-atmosphere" aria-hidden="true">
-      <div class="ctp-atmosphere-img"></div>
-      <div class="ctp-atmosphere-shade"></div>
-    </div>
     <div class="ctp-toolbar">
       <div class="ctp-ident">
         <div class="ctp-art" aria-hidden="true"></div>
@@ -518,7 +514,6 @@ function paintAtmosphere() {
   const root = document.getElementById(ROOT_ID);
   if (!root) return;
   const url = currentTrack?.artwork;
-  root.classList.toggle("ctp-has-art", Boolean(url));
   root.style.setProperty("--ctp-art", url ? `url("${url}")` : "none");
 }
 
@@ -566,10 +561,6 @@ function showStatus(title, detail) {
 
 function statusMarkup(title, detail) {
   return `
-    <div class="ctp-atmosphere" aria-hidden="true">
-      <div class="ctp-atmosphere-img"></div>
-      <div class="ctp-atmosphere-shade"></div>
-    </div>
     <div class="ctp-status">
       <div class="ctp-status-kicker">ChudTube+</div>
       <div class="ctp-status-title">${escapeHtml(title)}</div>
