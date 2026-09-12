@@ -1,0 +1,148 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 360px;
+  margin: 0;
+  padding: 16px;
+  background: #101014;
+  color: #f4f4f5;
+  font: 13px/1.45 "Segoe UI", "YouTube Sans", sans-serif;
+}
+
+.header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 16px;
+}
+
+.header p,
+.soon,
+footer,
+.setting-help {
+  color: #9a9aa3;
+}
+
+.card {
+  margin-bottom: 10px;
+  padding: 12px;
+  border: 1px solid #26262d;
+  border-radius: 12px;
+  background: #17171c;
+}
+
+.card.muted {
+  opacity: 0.72;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-size: 13px;
+}
+
+.pill {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 59, 78, 0.16);
+  color: #ff8b96;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pill.dim {
+  background: #24242b;
+  color: #8a8a93;
+}
+
+.setting {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.copy {
+  display: grid;
+  gap: 4px;
+}
+
+.setting-title {
+  font-weight: 650;
+}
+
+.setting-help {
+  font-size: 12px;
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  width: 40px;
+  height: 22px;
+  margin: 2px 0 0;
+  flex: none;
+  border-radius: 999px;
+  background: #2c2c34;
+  position: relative;
+  cursor: pointer;
+}
+
+input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f4f4f5;
+  transition: transform 160ms ease;
+}
+
+input[type="checkbox"]:checked {
+  background: #ff3b4e;
+}
+
+input[type="checkbox"]:checked::after {
+  transform: translateX(18px);
+}
+
+footer {
+  padding: 4px 2px 0;
+  font-size: 11px;
+}
+
+a {
+  color: #ff8b96;
+  text-decoration: none;
+}

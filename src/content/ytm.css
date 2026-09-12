@@ -1,0 +1,195 @@
+#tab-renderer.ctp-lyrics-visible > :not(#ctp-lyrics-root),
+ytmusic-tab-renderer.ctp-lyrics-visible > :not(#ctp-lyrics-root) {
+  display: none !important;
+}
+
+#ctp-boot-status {
+  position: fixed;
+  left: 16px;
+  bottom: 92px;
+  z-index: 2147483647;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #17171c;
+  color: #fff;
+  font: 12px/1.4 "Segoe UI", sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+#ctp-boot-status[data-error="1"] {
+  background: #ff3b4e;
+}
+
+ytmusic-player-bar .middle-controls {
+  position: relative;
+}
+
+#ctp-player-ticker {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  max-width: min(52vw, 640px);
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(16, 16, 20, 0.92);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  z-index: 4;
+}
+
+#ctp-lyrics-root,
+.ctp-lyrics {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  padding: 16px 18px 28px;
+  color: #f4f4f5;
+  font-family: "YouTube Sans", "Roboto", "Segoe UI", sans-serif;
+}
+
+.ctp-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.ctp-song {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.ctp-artist {
+  margin-top: 2px;
+  color: #b3b3bb;
+  font-size: 13px;
+}
+
+.ctp-badge {
+  flex: none;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 59, 78, 0.45);
+  border-radius: 999px;
+  color: #ff8b96;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ctp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 18vh 0;
+}
+
+.ctp-line {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.ctp-line:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ctp-time {
+  color: #6f6f78;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.ctp-text {
+  color: #8d8d96;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.ctp-line-past .ctp-text {
+  color: #c4c4cc;
+}
+
+.ctp-line-active {
+  background: rgba(255, 59, 78, 0.12);
+  transform: translateX(2px);
+}
+
+.ctp-line-active .ctp-time {
+  color: #ff3b4e;
+  font-weight: 700;
+}
+
+.ctp-line-active .ctp-text {
+  color: #fff;
+  text-shadow: 0 0 18px rgba(255, 59, 78, 0.28);
+}
+
+.ctp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  color: #7a7a84;
+  font-size: 12px;
+}
+
+.ctp-follow {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: #1d1d22;
+  color: #fff;
+  cursor: pointer;
+}
+
+.ctp-status {
+  display: grid;
+  place-items: center;
+  min-height: 42vh;
+  text-align: center;
+  gap: 8px;
+}
+
+.ctp-status-title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.ctp-status-detail {
+  max-width: 36ch;
+  color: #9a9aa3;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tab-header[disabled],
+tp-yt-paper-tab[disabled] {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}

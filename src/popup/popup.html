@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChudTube+</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="header">
+      <img class="logo" src="../../icons/icon48.png" alt="" />
+      <div>
+        <h1>ChudTube+</h1>
+        <p>Customize YouTube and YouTube Music</p>
+      </div>
+    </header>
+
+    <section class="card">
+      <div class="card-head">
+        <h2>YouTube Music</h2>
+        <span class="pill">Live</span>
+      </div>
+
+      <label class="setting">
+        <div class="copy">
+          <span class="setting-title">Follow-along lyrics</span>
+          <span class="setting-help">
+            Replace the YouTube Music lyrics tab with timestamped, follow-along lyrics from LRCLIB. Click a line to seek.
+          </span>
+        </div>
+        <input id="followAlongLyrics" type="checkbox" />
+      </label>
+    </section>
+
+    <section class="card muted">
+      <div class="card-head">
+        <h2>YouTube</h2>
+        <span class="pill dim">Next</span>
+      </div>
+      <p class="soon">YouTube customizations will land after the Music lyrics setting is solid.</p>
+    </section>
+
+    <footer>
+      Lyrics via <a href="https://lrclib.net" target="_blank" rel="noreferrer">LRCLIB</a>
+    </footer>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
