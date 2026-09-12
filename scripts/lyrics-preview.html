@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ChudTube+ lyrics preview</title>
+    <link rel="stylesheet" href="../src/content/ytm.css" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #0a0a0c;
+      }
+      #tab-renderer {
+        display: block;
+        width: 420px;
+        height: 100vh;
+        margin-left: auto;
+        overflow: auto;
+        background: #050506;
+      }
+    </style>
+  </head>
+  <body>
+    <ytmusic-tab-renderer id="tab-renderer" class="ctp-lyrics-visible">
+      <div id="ctp-lyrics-root" class="ctp-lyrics ctp-has-art" style='--ctp-art: url("https://i.ytimg.com/vi/placeholder/hqdefault.jpg")'>
+        <div class="ctp-atmosphere" aria-hidden="true">
+          <div class="ctp-atmosphere-img"></div>
+          <div class="ctp-atmosphere-shade"></div>
+        </div>
+        <div class="ctp-toolbar">
+          <div class="ctp-ident">
+            <div class="ctp-art" aria-hidden="true"></div>
+            <div class="ctp-track">
+              <div class="ctp-song">Bass Persuades</div>
+              <div class="ctp-artist">Miley Cyrus · Bass Persuades</div>
+            </div>
+          </div>
+          <div class="ctp-badge">Synced</div>
+        </div>
+        <div class="ctp-list">
+          <button class="ctp-line ctp-line-past" type="button">
+            <span class="ctp-time">0:30</span>
+            <span class="ctp-body"><span class="ctp-text">If we ain't movin', baby, baby, why are we here?</span><span class="ctp-meter"></span></span>
+          </button>
+          <button class="ctp-line ctp-line-past" type="button">
+            <span class="ctp-time">0:34</span>
+            <span class="ctp-body"><span class="ctp-text">And I don't wanna change your mind</span><span class="ctp-meter"></span></span>
+          </button>
+          <button class="ctp-line ctp-line-active" type="button" style="--ctp-progress: 0.62">
+            <span class="ctp-time">0:40</span>
+            <span class="ctp-body"><span class="ctp-text">The bass persuades, no I don't wanna change your mind (let's go)</span><span class="ctp-meter"></span></span>
+          </button>
+          <button class="ctp-line ctp-line-next" type="button">
+            <span class="ctp-time">0:51</span>
+            <span class="ctp-body"><span class="ctp-text">The kids don't wanna dance, the kids don't wanna dance (bum-bum)</span><span class="ctp-meter"></span></span>
+          </button>
+          <button class="ctp-line ctp-line-soon" type="button">
+            <span class="ctp-time">0:55</span>
+            <span class="ctp-body"><span class="ctp-text">The kids don't wanna dance, the kids don't wanna</span><span class="ctp-meter"></span></span>
+          </button>
+        </div>
+        <div class="ctp-footer">
+          <span>LRCLIB</span>
+        </div>
+      </div>
+    </ytmusic-tab-renderer>
+  </body>
+</html>

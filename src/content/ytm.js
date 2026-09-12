@@ -1,6 +1,6 @@
 import { getSettings, onSettingsChanged } from "../lib/settings.js";
 import { activeLineIndex, formatTimestamp } from "../lib/lrc.js";
-import { getPlayerVideo, isAdvertisement, readNowPlaying, trackKey } from "../lib/ytm-track.js";
+import { getPlayerVideo, isAdvertisement, readArtwork, readNowPlaying, trackKey } from "../lib/ytm-track.js";
 
 const ROOT_ID = "ctp-lyrics-root";
 const TICKER_ID = "ctp-player-ticker";
@@ -17,8 +17,13 @@ let activeIndex = -1;
 let userScrollingUntil = 0;
 let playbackTime = 0;
 let lyricsTabWanted = false;
+let visibilityLock = null;
+let showLyricsTimer = 0;
 let observers = [];
+let tabsObserver = null;
 let pollId = 0;
+
+const VISIBILITY_LOCK_MS = 800;
 
 const bootStatus = document.getElementById("ctp-boot-status");
 if (bootStatus && bootStatus.dataset.error !== "1") {
@@ -48,6 +53,7 @@ function start() {
   if (started) return;
   started = true;
   document.documentElement.classList.add("ctp-enabled");
+  document.addEventListener("iron-select", onIronSelect, true);
   bindObservers();
   pollId = window.setInterval(tick, 700);
   tick();
@@ -59,8 +65,14 @@ function stop() {
   document.documentElement.classList.remove("ctp-enabled");
   observers.forEach((obs) => obs.disconnect());
   observers = [];
+  tabsObserver = null;
+  document.removeEventListener("iron-select", onIronSelect, true);
   if (pollId) window.clearInterval(pollId);
   pollId = 0;
+  if (showLyricsTimer) window.clearTimeout(showLyricsTimer);
+  showLyricsTimer = 0;
+  lyricsTabWanted = false;
+  visibilityLock = null;
   teardownUi();
   currentKey = "";
   currentTrack = null;
@@ -81,31 +93,49 @@ function onPageMessage(event) {
 
 function onDocumentClick(event) {
   const tab = event.target.closest?.(".tab-header, tp-yt-paper-tab, [role='tab']");
-  if (!tab) return;
-  if (/lyric/i.test(tab.textContent || "")) {
-    lyricsTabWanted = true;
-    log("lyrics tab clicked");
-    window.setTimeout(() => {
+  if (!tab || !isPlayerPageTab(tab)) return;
+  onPlayerTabChosen(tab);
+}
+
+function onIronSelect(event) {
+  const item = event.detail?.item;
+  if (!item?.matches?.(".tab-header, tp-yt-paper-tab, [role='tab']")) return;
+  if (!isPlayerPageTab(item)) return;
+  onPlayerTabChosen(item);
+}
+
+function onPlayerTabChosen(tab) {
+  const show = tabLooksLikeLyrics(tab);
+  lockLyricsVisibility(show);
+  if (showLyricsTimer) {
+    window.clearTimeout(showLyricsTimer);
+    showLyricsTimer = 0;
+  }
+  if (show) {
+    log("lyrics tab selected");
+    ensureRoot();
+    showLyricsTimer = window.setTimeout(() => {
+      showLyricsTimer = 0;
       ensureRoot();
       render();
     }, 50);
     return;
   }
-  if (tab.closest("ytmusic-player-page, .tab-header-container, #tabs-content, tp-yt-paper-tabs")) {
-    lyricsTabWanted = false;
-  }
+  ensureRoot();
 }
 
 function bindObservers() {
   let scheduled = false;
-  const observer = new MutationObserver(() => {
+  const schedule = () => {
     if (scheduled) return;
     scheduled = true;
     requestAnimationFrame(() => {
       scheduled = false;
       tick();
     });
-  });
+  };
+
+  const observer = new MutationObserver(schedule);
   observer.observe(document.documentElement, {
     childList: true,
     subtree: true,
@@ -113,14 +143,40 @@ function bindObservers() {
     attributeFilter: ["disabled", "aria-selected", "page-type", "is-advertisement", "player-ui-state"],
   });
   observers.push(observer);
+
+  tabsObserver = new MutationObserver(schedule);
+  observers.push(tabsObserver);
+  watchPlayerTabs();
+}
+
+function watchPlayerTabs() {
+  const tabs = document.querySelector(
+    "ytmusic-player-page tp-yt-paper-tabs, ytmusic-player-page .tab-header-container"
+  );
+  if (!tabs || !tabsObserver) return;
+  if (tabsObserver._ctpTarget === tabs) return;
+  tabsObserver._ctpTarget = tabs;
+  tabsObserver.observe(tabs, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["aria-selected", "class", "disabled"],
+  });
 }
 
 function tick() {
   if (!enabled) return;
+  watchPlayerTabs();
   enableLyricsTab();
   ensureTicker();
   ensureRoot();
   if (!currentTrack) applyTrack(readNowPlaying());
+  else if (!currentTrack.artwork) {
+    const art = readArtwork();
+    if (art) {
+      currentTrack.artwork = art;
+      paintAtmosphere();
+    }
+  }
 }
 
 function applyTrack(track) {
@@ -130,10 +186,15 @@ function applyTrack(track) {
     artist: String(track.artist).split(/\s*[•·]\s*/)[0].trim(),
     album: track.album || "",
     duration: Number(track.duration) || readNowPlaying()?.duration || null,
+    artwork: track.artwork || readArtwork() || "",
   };
   const key = trackKey(cleaned);
   if (!key || key === currentKey) {
     currentTrack = currentTrack || cleaned;
+    if (cleaned.artwork && currentTrack.artwork !== cleaned.artwork) {
+      currentTrack.artwork = cleaned.artwork;
+      paintAtmosphere();
+    }
     return;
   }
   currentKey = key;
@@ -172,17 +233,23 @@ function onPlayback() {
     return;
   }
   const next = activeLineIndex(lines, playbackTime + 0.05);
-  if (next === activeIndex) return;
-  activeIndex = next;
-  paintActiveLine();
-  updateTicker();
+  if (next !== activeIndex) {
+    activeIndex = next;
+    paintActiveLine();
+    updateTicker();
+    return;
+  }
+  updateProgress();
 }
 
 function enableLyricsTab() {
-  const tabs = document.querySelectorAll(".tab-header, tp-yt-paper-tab, [role='tab']");
-  for (const tab of tabs) {
-    const label = (tab.textContent || "").trim().toLowerCase();
-    if (!label.includes("lyric")) continue;
+  for (const tab of getPlayerTabs()) {
+    if (!tabLooksLikeLyrics(tab)) continue;
+    const disabled =
+      tab.hasAttribute("disabled") ||
+      tab.getAttribute("aria-disabled") === "true" ||
+      tab.disabled === true;
+    if (!disabled && tab.style.pointerEvents === "auto") continue;
     tab.removeAttribute("disabled");
     tab.removeAttribute("aria-disabled");
     tab.setAttribute("aria-disabled", "false");
@@ -192,52 +259,97 @@ function enableLyricsTab() {
   }
 }
 
-function isLyricsTabActive() {
-  if (lyricsTabWanted) return true;
-  const renderer = getTabRenderer();
-  const pageType = String(renderer?.getAttribute("page-type") || renderer?.pageType || "");
-  if (pageType.includes("LYRICS")) return true;
+function getPlayerTabs() {
+  const page = document.querySelector("ytmusic-player-page");
+  const scope = page || document;
+  return [...scope.querySelectorAll(".tab-header, tp-yt-paper-tab, [role='tab']")];
+}
 
-  const tabs = [...document.querySelectorAll(".tab-header, tp-yt-paper-tab, [role='tab']")];
-  for (const tab of tabs) {
-    const selected =
-      tab.getAttribute("aria-selected") === "true" || tab.classList.contains("iron-selected");
-    if (selected && /lyric/i.test(tab.textContent || "")) return true;
+function isPlayerPageTab(tab) {
+  if (!tab?.closest?.("ytmusic-player-page")) return false;
+  return Boolean(
+    tab.closest?.(".tab-header-container, tp-yt-paper-tabs, #tabsContent, #tabs-content")
+  );
+}
+
+function tabLooksLikeLyrics(tab) {
+  return /lyric/i.test(tab?.textContent || "");
+}
+
+function isTabSelected(tab) {
+  return tab.getAttribute("aria-selected") === "true" || tab.classList.contains("iron-selected");
+}
+
+function getTabPageType() {
+  const renderer = getTabRenderer();
+  return String(renderer?.getAttribute("page-type") || renderer?.pageType || "");
+}
+
+function lockLyricsVisibility(visible) {
+  lyricsTabWanted = visible;
+  visibilityLock = { visible, until: Date.now() + VISIBILITY_LOCK_MS };
+}
+
+function isLyricsTabActive() {
+  if (visibilityLock) {
+    if (Date.now() < visibilityLock.until) return visibilityLock.visible;
+    visibilityLock = null;
   }
 
-  return Boolean(
-    renderer?.querySelector(
-      "ytmusic-description-shelf-renderer, ytmusic-message-renderer, ytmusic-lyrics-renderer, ytmusic-timed-lyrics-renderer"
-    )
-  );
+  const selected = getPlayerTabs().find(isTabSelected);
+  if (selected) {
+    lyricsTabWanted = tabLooksLikeLyrics(selected);
+    return lyricsTabWanted;
+  }
+
+  const pageType = getTabPageType();
+  if (pageType) {
+    lyricsTabWanted = /LYRICS/i.test(pageType);
+    return lyricsTabWanted;
+  }
+
+  return lyricsTabWanted;
 }
 
 function getTabRenderer() {
   return document.querySelector(TAB_RENDERER) || document.querySelector("ytmusic-tab-renderer");
 }
 
+function setLyricsVisible(visible) {
+  const host = getTabRenderer();
+  host?.classList.toggle("ctp-lyrics-visible", visible);
+  const root = document.getElementById(ROOT_ID);
+  if (!root) return;
+  root.hidden = !visible;
+  root.setAttribute("aria-hidden", visible ? "false" : "true");
+}
+
 function ensureRoot() {
   const host = getTabRenderer();
-  if (!host) return null;
+  if (!host) {
+    document.getElementById(ROOT_ID)?.remove();
+    return null;
+  }
 
+  const visible = isLyricsTabActive();
   let root = document.getElementById(ROOT_ID);
   if (root && root.parentElement !== host) {
     root.remove();
     root = null;
   }
-  if (!root) {
+
+  if (!root && visible) {
     root = document.createElement("div");
     root.id = ROOT_ID;
     root.className = "ctp-lyrics";
+    root.hidden = true;
     host.prepend(root);
     bindRootEvents(root);
     render();
   }
 
-  const visible = isLyricsTabActive();
-  host.classList.toggle("ctp-lyrics-visible", visible);
-  root.hidden = !visible;
-  return visible ? root : root;
+  setLyricsVisible(visible);
+  return root;
 }
 
 function teardownUi() {
@@ -276,38 +388,38 @@ function render() {
   root.dataset.ready = "1";
 
   if (isAdvertisement()) {
-    root.innerHTML = statusMarkup("Ad playing", "Lyrics resume after the ad.");
+    showStatus("Ad playing", "Lyrics resume after the ad.");
     return;
   }
 
   if (!currentTrack) {
-    root.innerHTML = statusMarkup("Waiting for a track", "Play a song to load follow-along lyrics.");
+    showStatus("Waiting for a track", "Play a song to load follow-along lyrics.");
     return;
   }
 
   if (lyricsState.status === "loading" || lyricsState.status === "idle") {
-    root.innerHTML = statusMarkup("Fetching lyrics", `${escapeHtml(currentTrack.title)} · LRCLIB`);
+    showStatus("Fetching lyrics", `${currentTrack.title} · LRCLIB`);
     return;
   }
 
   if (lyricsState.status === "instrumental") {
-    root.innerHTML = statusMarkup("Instrumental", "LRCLIB marked this track as instrumental.");
+    showStatus("Instrumental", "LRCLIB marked this track as instrumental.");
     return;
   }
 
   if (lyricsState.status === "not_found") {
-    root.innerHTML = statusMarkup("No lyrics on LRCLIB", "This track is not in the LRCLIB catalog yet.");
+    showStatus("No lyrics on LRCLIB", "This track is not in the LRCLIB catalog yet.");
     return;
   }
 
   if (lyricsState.status === "error") {
-    root.innerHTML = statusMarkup("Could not load lyrics", lyricsState.error || "Try another track.");
+    showStatus("Could not load lyrics", lyricsState.error || "Try another track.");
     return;
   }
 
   const lines = lyricsState.lines || [];
   if (!lines.length) {
-    root.innerHTML = statusMarkup("No lyrics on LRCLIB", "This track is not in the LRCLIB catalog yet.");
+    showStatus("No lyrics on LRCLIB", "This track is not in the LRCLIB catalog yet.");
     return;
   }
 
@@ -315,30 +427,43 @@ function render() {
   const items = lines
     .map((line, index) => {
       const timeAttr = synced && Number.isFinite(line.time) ? ` data-ctp-time="${line.time}"` : "";
-      const stamp = synced ? formatTimestamp(line.time) : "--:--";
+      const stamp = synced ? formatTimestamp(line.time) : "";
       const state = index === activeIndex ? " ctp-line-active" : index < activeIndex ? " ctp-line-past" : "";
+      const text = escapeHtml(line.text);
       return `<button class="ctp-line${state}" type="button"${timeAttr} data-index="${index}">
         <span class="ctp-time">${stamp}</span>
-        <span class="ctp-text">${escapeHtml(line.text)}</span>
+        <span class="ctp-body">
+          <span class="ctp-text">${text}</span>
+          <span class="ctp-meter" aria-hidden="true"></span>
+        </span>
       </button>`;
     })
     .join("");
 
-  const sourceLabel = synced ? "Follow-along · LRCLIB" : "Unsynced · LRCLIB";
+  const sourceLabel = synced ? "Synced" : "Unsynced";
+
   root.innerHTML = `
+    <div class="ctp-atmosphere" aria-hidden="true">
+      <div class="ctp-atmosphere-img"></div>
+      <div class="ctp-atmosphere-shade"></div>
+    </div>
     <div class="ctp-toolbar">
-      <div class="ctp-track">
-        <div class="ctp-song">${escapeHtml(currentTrack.title)}</div>
-        <div class="ctp-artist">${escapeHtml(currentTrack.artist)}</div>
+      <div class="ctp-ident">
+        <div class="ctp-art" aria-hidden="true"></div>
+        <div class="ctp-track">
+          <div class="ctp-song">${escapeHtml(currentTrack.title)}</div>
+          <div class="ctp-artist">${escapeHtml([currentTrack.artist, currentTrack.album].filter(Boolean).join(" · "))}</div>
+        </div>
       </div>
       <div class="ctp-badge">${sourceLabel}</div>
     </div>
     <div class="ctp-list" role="list">${items}</div>
     <div class="ctp-footer">
-      <span>Timestamps from LRCLIB</span>
-      <button class="ctp-follow" type="button" hidden>Follow</button>
+      <span>LRCLIB</span>
+      <button class="ctp-follow" type="button" hidden>Resume follow</button>
     </div>
   `;
+  paintAtmosphere();
 
   root.querySelector(".ctp-follow")?.addEventListener("click", () => {
     userScrollingUntil = 0;
@@ -358,7 +483,10 @@ function paintActiveLine(force = false) {
   lines.forEach((el, index) => {
     el.classList.toggle("ctp-line-active", index === activeIndex);
     el.classList.toggle("ctp-line-past", activeIndex >= 0 && index < activeIndex);
+    el.classList.toggle("ctp-line-next", index === activeIndex + 1);
+    el.classList.toggle("ctp-line-soon", index === activeIndex + 2);
   });
+  updateProgress();
 
   const follow = root.querySelector(".ctp-follow");
   const userHeld = Date.now() < userScrollingUntil;
@@ -369,8 +497,29 @@ function paintActiveLine(force = false) {
   }
   root.classList.remove("ctp-user-scrolling");
   const current = lines[activeIndex];
-  if (!current || root.hidden) return;
+  if (!current || root.hidden || !isLyricsTabActive()) return;
   current.scrollIntoView({ block: "center", inline: "nearest", behavior: force ? "auto" : "smooth" });
+}
+
+function updateProgress() {
+  const root = document.getElementById(ROOT_ID);
+  const current = root?.querySelector(".ctp-line-active");
+  if (!current || !lyricsState.synced) return;
+  const lines = lyricsState.lines || [];
+  const start = Number(lines[activeIndex]?.time);
+  const end = Number(lines[activeIndex + 1]?.time);
+  if (!Number.isFinite(start)) return;
+  const span = Number.isFinite(end) && end > start ? end - start : 4;
+  const progress = Math.max(0, Math.min(1, (playbackTime - start) / span));
+  current.style.setProperty("--ctp-progress", progress.toFixed(4));
+}
+
+function paintAtmosphere() {
+  const root = document.getElementById(ROOT_ID);
+  if (!root) return;
+  const url = currentTrack?.artwork;
+  root.classList.toggle("ctp-has-art", Boolean(url));
+  root.style.setProperty("--ctp-art", url ? `url("${url}")` : "none");
 }
 
 function ensureTicker() {
@@ -408,9 +557,21 @@ function updateTicker() {
   ticker.textContent = line?.text ? `♪ ${line.text}` : "ChudTube+ · lyrics ready — open Lyrics";
 }
 
+function showStatus(title, detail) {
+  const root = document.getElementById(ROOT_ID);
+  if (!root) return;
+  root.innerHTML = statusMarkup(title, detail);
+  paintAtmosphere();
+}
+
 function statusMarkup(title, detail) {
   return `
+    <div class="ctp-atmosphere" aria-hidden="true">
+      <div class="ctp-atmosphere-img"></div>
+      <div class="ctp-atmosphere-shade"></div>
+    </div>
     <div class="ctp-status">
+      <div class="ctp-status-kicker">ChudTube+</div>
       <div class="ctp-status-title">${escapeHtml(title)}</div>
       <div class="ctp-status-detail">${escapeHtml(detail)}</div>
     </div>

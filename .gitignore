@@ -7,3 +7,6 @@ node_modules/
 .brave-debug/
 scripts/inspect-ytm*.png
 scripts/inspect-ytm*.json
+scripts/lyrics-preview*.png
+scripts/verify-lyrics-visibility.html
+scripts/verify-lyrics-*.png
