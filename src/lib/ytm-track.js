@@ -13,7 +13,19 @@ export function readNowPlaying(root = document) {
   if (!artist) return null;
 
   const duration = readDuration(root, bar);
-  return { title, artist, album, duration };
+  return { title, artist, album, duration, artwork: readArtwork(root) };
+}
+
+export function readArtwork(root = document) {
+  const img =
+    root.querySelector("ytmusic-player-bar img.ytmusic-player-bar") ||
+    root.querySelector("ytmusic-player-bar .image img") ||
+    root.querySelector("ytmusic-player-bar img") ||
+    root.querySelector("#song-image img") ||
+    root.querySelector("ytmusic-player img");
+  const src = img?.currentSrc || img?.src || "";
+  if (!src || src.startsWith("data:")) return "";
+  return upgradeArt(src);
 }
 
 export function getPlayerVideo(root = document) {
@@ -79,6 +91,13 @@ function readDuration(root, bar) {
   const match = info.match(/\/\s*(\d+:\d+(?::\d+)?)/);
   if (!match) return null;
   return parseClock(match[1]);
+}
+
+function upgradeArt(url) {
+  return url
+    .replace(/=w\d+-h\d+[^&?]*/g, "=w800-h800")
+    .replace(/=s\d+(?:-c)?/g, "=s800")
+    .replace(/([?&]sz=)\d+/g, "$1800");
 }
 
 function parseClock(value) {
