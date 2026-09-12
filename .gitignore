@@ -1,0 +1,9 @@
+.DS_Store
+Thumbs.db
+*.crx
+*.pem
+*.zip
+node_modules/
+.brave-debug/
+scripts/inspect-ytm*.png
+scripts/inspect-ytm*.json
