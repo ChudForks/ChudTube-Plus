@@ -1,4 +1,6 @@
 (() => {
+  if (!/(^|\.)music\.youtube\.com$/i.test(location.hostname)) return;
+
   const state = {
     videoId: "",
     title: "",

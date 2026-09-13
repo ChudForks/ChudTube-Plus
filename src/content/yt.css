@@ -1,0 +1,172 @@
+html[data-ctp-theme="oled-black"]:not(.style-scope),
+html[data-ctp-theme="oled-black"]:not(.style-scope)[dark],
+html[data-ctp-theme="oled-black"]:not(.style-scope)[darker-dark-theme],
+html[data-ctp-theme="oled-black"][dark],
+html[data-ctp-theme="oled-black"][darker-dark-theme],
+html[data-ctp-theme="oled-black"] ytd-app,
+html[data-ctp-theme="oled-black"] [dark] {
+  color-scheme: dark;
+
+  --ctp-oled: #000;
+  --ctp-oled-hover: rgba(255, 255, 255, 0.08);
+  --ctp-oled-chip: rgba(255, 255, 255, 0.1);
+  --ctp-oled-outline: #222;
+
+  --yt-spec-base-background: var(--ctp-oled) !important;
+  --yt-spec-raised-background: var(--ctp-oled) !important;
+  --yt-spec-menu-background: var(--ctp-oled) !important;
+  --yt-spec-brand-background-solid: var(--ctp-oled) !important;
+  --yt-spec-brand-background-primary: var(--ctp-oled) !important;
+  --yt-spec-brand-background-secondary: var(--ctp-oled) !important;
+  --yt-spec-general-background-a: var(--ctp-oled) !important;
+  --yt-spec-general-background-b: var(--ctp-oled) !important;
+  --yt-spec-general-background-c: var(--ctp-oled) !important;
+  --yt-spec-additive-background: var(--ctp-oled-hover) !important;
+  --yt-spec-error-background: var(--ctp-oled) !important;
+  --yt-spec-snackbar-background: var(--ctp-oled) !important;
+  --yt-spec-overlay-background-solid: var(--ctp-oled) !important;
+  --yt-spec-static-overlay-background-solid: var(--ctp-oled) !important;
+  --yt-spec-static-overlay-background-heavy: rgba(0, 0, 0, 0.8) !important;
+  --yt-spec-themed-overlay-background: rgba(0, 0, 0, 0.8) !important;
+  --yt-spec-badge-chip-background: var(--ctp-oled-chip) !important;
+  --yt-spec-button-chip-background-hover: rgba(255, 255, 255, 0.16) !important;
+  --yt-spec-10-percent-layer: var(--ctp-oled-chip) !important;
+  --yt-spec-outline: rgba(255, 255, 255, 0.12) !important;
+  --yt-spec-outline-opaque: var(--ctp-oled-outline) !important;
+  --yt-spec-frosted-glass-desktop: var(--ctp-oled) !important;
+  --yt-frosted-glass-desktop: var(--ctp-oled) !important;
+  --yt-spec-scrim-background-gradient-5: var(--ctp-oled) !important;
+  --yt-saturated-raised-background: var(--ctp-oled) !important;
+  --yt-lightsource-section1-color: var(--ctp-oled) !important;
+  --yt-lightsource-section2-color: var(--ctp-oled) !important;
+  --yt-lightsource-section3-color: var(--ctp-oled) !important;
+  --yt-lightsource-section4-color: var(--ctp-oled) !important;
+  --yt-saturated-base-background: var(--ctp-oled) !important;
+
+  --yt-sys-color-baseline--base-background: var(--ctp-oled) !important;
+  --yt-sys-color-baseline--raised-background: var(--ctp-oled) !important;
+  --yt-sys-color-baseline--menu-background: var(--ctp-oled) !important;
+  --yt-sys-color-baseline--additive-background: var(--ctp-oled-hover) !important;
+  --yt-sys-color-baseline--overlay-background-solid: var(--ctp-oled) !important;
+  --yt-sys-color-baseline--outline: var(--ctp-oled-hover) !important;
+  --yt-sys-color-baseline--outline-opaque: var(--ctp-oled-outline) !important;
+  --yt-sys-color-baseline--scrim-background-gradient-5: var(--ctp-oled) !important;
+
+  --ytd-searchbox-background: var(--ctp-oled) !important;
+  --ytd-searchbox-legacy-button-color: var(--ctp-oled) !important;
+  --ytd-searchbox-legacy-border-color: var(--ctp-oled-outline) !important;
+  --ytd-searchbox-legacy-button-border-color: var(--ctp-oled-outline) !important;
+  --ytd-searchbox-border-color: var(--ctp-oled-outline) !important;
+
+  --dark-theme-background-color: var(--ctp-oled) !important;
+  --primary-background-color: var(--ctp-oled) !important;
+  --paper-dialog-background-color: var(--ctp-oled) !important;
+  --app-drawer-content-container-background-color: var(--ctp-oled) !important;
+
+  --yt-live-chat-background-color: var(--ctp-oled) !important;
+  --yt-live-chat-action-panel-background-color: var(--ctp-oled) !important;
+  --yt-live-chat-secondary-background-color: var(--ctp-oled) !important;
+  --yt-live-chat-dialog-background-color: var(--ctp-oled) !important;
+  --yt-live-chat-sub-panel-background-color: var(--ctp-oled) !important;
+}
+
+html[data-ctp-theme="oled-black"],
+html[data-ctp-theme="oled-black"] body,
+html[data-ctp-theme="oled-black"] ytd-app,
+html[data-ctp-theme="oled-black"] ytd-browse,
+html[data-ctp-theme="oled-black"] ytd-page-manager,
+html[data-ctp-theme="oled-black"] ytd-watch-flexy,
+html[data-ctp-theme="oled-black"] ytd-watch-flexy[theater],
+html[data-ctp-theme="oled-black"] ytd-app[is-watch-page],
+html[data-ctp-theme="oled-black"] ytd-app[is-shorts-page],
+html[data-ctp-theme="oled-black"] #page-manager,
+html[data-ctp-theme="oled-black"] #columns,
+html[data-ctp-theme="oled-black"] #primary,
+html[data-ctp-theme="oled-black"] #secondary,
+html[data-ctp-theme="oled-black"] #content,
+html[data-ctp-theme="oled-black"] #contents {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
+html[data-ctp-theme="oled-black"] #skip-navigation,
+html[data-ctp-theme="oled-black"] ytd-feed-nudge-renderer,
+html[data-ctp-theme="oled-black"] ytd-feed-nudge-renderer #content-wrapper,
+html[data-ctp-theme="oled-black"] ytd-comments,
+html[data-ctp-theme="oled-black"] #description.ytd-watch-metadata,
+html[data-ctp-theme="oled-black"] #description-inner.ytd-watch-metadata,
+html[data-ctp-theme="oled-black"] ytd-watch-metadata,
+html[data-ctp-theme="oled-black"] ytd-rich-grid-renderer,
+html[data-ctp-theme="oled-black"] ytd-two-column-browse-results-renderer,
+html[data-ctp-theme="oled-black"] #below,
+html[data-ctp-theme="oled-black"] #related,
+html[data-ctp-theme="oled-black"] ytd-masthead,
+html[data-ctp-theme="oled-black"] #masthead-container,
+html[data-ctp-theme="oled-black"] #background.ytd-masthead,
+html[data-ctp-theme="oled-black"] #container.ytd-masthead,
+html[data-ctp-theme="oled-black"] #frosted-glass,
+html[data-ctp-theme="oled-black"] #frosted-glass.ytd-app,
+html[data-ctp-theme="oled-black"] #chips-wrapper,
+html[data-ctp-theme="oled-black"] ytd-feed-filter-chip-bar-renderer,
+html[data-ctp-theme="oled-black"] #header.ytd-rich-grid-renderer,
+html[data-ctp-theme="oled-black"] #guide-content,
+html[data-ctp-theme="oled-black"] ytd-mini-guide-renderer,
+html[data-ctp-theme="oled-black"] ytd-mini-guide-entry-renderer,
+html[data-ctp-theme="oled-black"] tp-yt-app-drawer,
+html[data-ctp-theme="oled-black"] #guide-inner-content,
+html[data-ctp-theme="oled-black"] ytd-playlist-sidebar-renderer,
+html[data-ctp-theme="oled-black"] ytd-playlist-header-renderer,
+html[data-ctp-theme="oled-black"] ytd-engagement-panel-section-list-renderer,
+html[data-ctp-theme="oled-black"] ytd-miniplayer,
+html[data-ctp-theme="oled-black"] ytd-miniplayer[active],
+html[data-ctp-theme="oled-black"] .playlist-items.ytd-playlist-panel-renderer,
+html[data-ctp-theme="oled-black"] ytd-playlist-panel-renderer,
+html[data-ctp-theme="oled-black"] #guide-skeleton,
+html[data-ctp-theme="oled-black"] #home-container-skeleton,
+html[data-ctp-theme="oled-black"] #home-chips {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
+html[data-ctp-theme="oled-black"] .ytSearchboxComponentInputBox,
+html[data-ctp-theme="oled-black"] .ytSearchboxComponentInputBoxDark,
+html[data-ctp-theme="oled-black"] .ytSearchboxComponentSuggestionsContainer,
+html[data-ctp-theme="oled-black"] .ytSearchboxComponentSuggestionsContainerDark,
+html[data-ctp-theme="oled-black"] .ytSearchboxComponentSearchButton,
+html[data-ctp-theme="oled-black"] .ytSearchboxComponentSearchButtonDark {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
+html[data-ctp-theme="oled-black"] .ytChipShapeInactive {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+html[data-ctp-theme="oled-black"] tp-yt-paper-dialog,
+html[data-ctp-theme="oled-black"] tp-yt-paper-listbox,
+html[data-ctp-theme="oled-black"] ytd-popup-container,
+html[data-ctp-theme="oled-black"] ytd-menu-popup-renderer,
+html[data-ctp-theme="oled-black"] yt-sheet-view-model,
+html[data-ctp-theme="oled-black"] .ytContextualSheetLayoutHost,
+html[data-ctp-theme="oled-black"] .ytSpecDialogLayoutHost,
+html[data-ctp-theme="oled-black"] ytd-multi-page-menu-renderer,
+html[data-ctp-theme="oled-black"] yt-confirm-dialog-renderer[dialog] {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
+html[data-ctp-theme="oled-black"] #cinematics,
+html[data-ctp-theme="oled-black"] #cinematic-container,
+html[data-ctp-theme="oled-black"] #cinematics-container {
+  display: none !important;
+}
+
+html[data-ctp-theme="oled-black"] ytm-app,
+html[data-ctp-theme="oled-black"] ytm-browse,
+html[data-ctp-theme="oled-black"] ytm-mobile-topbar-renderer,
+html[data-ctp-theme="oled-black"] .mobile-topbar-header,
+html[data-ctp-theme="oled-black"] ytm-pivot-bar-renderer,
+html[data-ctp-theme="oled-black"] .chip-bar {
+  background: #000 !important;
+  background-color: #000 !important;
+}

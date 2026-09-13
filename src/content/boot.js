@@ -1,4 +1,6 @@
 (async () => {
+  if (!/(^|\.)music\.youtube\.com$/i.test(location.hostname)) return;
+
   const mark = (text, error) => {
     console[error ? "error" : "info"]("[ChudTube+]", text, error || "");
     let el = document.getElementById("ctp-boot-status");
