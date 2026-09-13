@@ -2,9 +2,18 @@
 
 Chromium extension that customizes YouTube and YouTube Music.
 
-This first version ships one YouTube Music setting: **Follow-along lyrics**. It replaces the native lyrics tab with timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
+YouTube ships a **True OLED black** theme. YouTube Music ships **Follow-along lyrics**, which replaces the native lyrics tab with timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
 
 ## What it does
+
+### YouTube
+
+- Themes → **True OLED black**: true `#000` page chrome instead of YouTube's gray dark mode
+- OLED pixels can turn off on the large surfaces (home, watch, sidebar, masthead)
+- Forces YouTube's dark appearance while the theme is on
+- Toggle it from the toolbar popup
+
+### YouTube Music
 
 - Watches the current YouTube Music track
 - Looks up synced lyrics on LRCLIB (`/api/get`, then `/api/search`)
@@ -14,8 +23,6 @@ This first version ships one YouTube Music setting: **Follow-along lyrics**. It 
 - Falls back to unsynced LRCLIB text when timestamps are missing
 - Toggle it from the toolbar popup
 
-YouTube customizations are next. The settings shape already reserves a YouTube section.
-
 ## Load unpacked
 
 1. Open Chrome, Edge, Brave, or another Chromium browser
@@ -23,7 +30,7 @@ YouTube customizations are next. The settings shape already reserves a YouTube s
 3. Turn on **Developer mode**
 4. Click **Load unpacked**
 5. Select this folder (`ChudTube+`)
-6. Open [YouTube Music](https://music.youtube.com), play a song, and open the **Lyrics** tab
+6. Open [YouTube](https://www.youtube.com) for the OLED theme, or [YouTube Music](https://music.youtube.com), play a song, and open the **Lyrics** tab
 
 The lyrics tab is re-enabled when YouTube Music disables it because it has no official lyrics.
 
@@ -33,11 +40,14 @@ Click the ChudTube+ icon:
 
 | Setting | Default | Effect |
 | --- | --- | --- |
+| YouTube → Themes → True OLED black | On | Pure `#000` chrome on youtube.com |
 | YouTube Music → Follow-along lyrics | On | Inject timestamped LRCLIB lyrics into the lyrics tab |
 
 ## Permissions
 
-- `storage` — save the setting and cache lyrics locally
+- `storage` — save the settings and cache lyrics locally
+- `scripting` — apply the OLED theme to already-open YouTube tabs
+- `youtube.com` — apply themes
 - `music.youtube.com` — read the player and replace the lyrics tab
 - `lrclib.net` — fetch lyrics
 
@@ -52,6 +62,8 @@ src/lib/settings.js        synced settings
 src/lib/lrc.js             LRC parser
 src/lib/lrclib.js          LRCLIB client
 src/lib/ytm-track.js       now-playing metadata
+src/content/yt.js          YouTube themes
+src/content/yt.css
 src/content/ytm.js         YouTube Music injection
 src/content/ytm.css
 src/popup/                 toolbar popup

@@ -1,15 +1,24 @@
+export const YOUTUBE_THEMES = ["default", "oled-black"];
+
 export const DEFAULT_SETTINGS = {
   ytm: {
     followAlongLyrics: true,
+  },
+  youtube: {
+    theme: "oled-black",
   },
 };
 
 export function mergeSettings(stored) {
   const incoming = stored && typeof stored === "object" ? stored : {};
+  const theme = incoming.youtube?.theme;
   return {
     ytm: {
       followAlongLyrics:
         incoming.ytm?.followAlongLyrics ?? DEFAULT_SETTINGS.ytm.followAlongLyrics,
+    },
+    youtube: {
+      theme: YOUTUBE_THEMES.includes(theme) ? theme : DEFAULT_SETTINGS.youtube.theme,
     },
   };
 }
