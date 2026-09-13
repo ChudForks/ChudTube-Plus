@@ -42,9 +42,9 @@ const html = `<!doctype html>
           <div class="ctp-badge">Synced</div>
         </div>
         <div class="ctp-list">
-          <button class="ctp-line ctp-line-active" type="button" style="--ctp-progress: 0.62">
+          <button class="ctp-line ctp-line-active" type="button">
             <span class="ctp-time">0:39</span>
-            <span class="ctp-body"><span class="ctp-text">I'm begging you to walk in my shoes any time with extra words that wrap</span><span class="ctp-meter"></span></span>
+            <span class="ctp-body"><span class="ctp-text">I'm begging you to walk in my shoes any time with extra words that wrap</span><span class="ctp-meter" aria-hidden="true"><span class="ctp-meter-fill" style="transform: scaleX(0.62)"></span></span></span>
           </button>
         </div>
       </div>
