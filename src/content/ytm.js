@@ -16,12 +16,17 @@ let requestSeq = 0;
 let activeIndex = -1;
 let userScrollingUntil = 0;
 let playbackTime = 0;
+let playbackPaused = true;
 let lyricsTabWanted = false;
 let visibilityLock = null;
 let showLyricsTimer = 0;
 let observers = [];
 let tabsObserver = null;
 let pollId = 0;
+let highResWanted = false;
+let timeNeedEnabled = false;
+let lastTickerText = "";
+let lastProgressKey = "";
 
 const VISIBILITY_LOCK_MS = 800;
 
@@ -55,8 +60,11 @@ function start() {
   document.documentElement.classList.add("ctp-enabled");
   document.addEventListener("iron-select", onIronSelect, true);
   bindObservers();
+  document.addEventListener("fullscreenchange", onFullscreenChange);
   pollId = window.setInterval(tick, 700);
   tick();
+  syncFullscreenState();
+  syncTimeNeed();
   log("started");
 }
 
@@ -67,6 +75,7 @@ function stop() {
   observers = [];
   tabsObserver = null;
   document.removeEventListener("iron-select", onIronSelect, true);
+  document.removeEventListener("fullscreenchange", onFullscreenChange);
   if (pollId) window.clearInterval(pollId);
   pollId = 0;
   if (showLyricsTimer) window.clearTimeout(showLyricsTimer);
@@ -78,16 +87,22 @@ function stop() {
   currentTrack = null;
   lyricsState = { status: "idle" };
   activeIndex = -1;
+  lastTickerText = "";
+  lastProgressKey = "";
+  document.documentElement.classList.remove("ctp-video-fs");
+  syncTimeNeed();
 }
 
 function onPageMessage(event) {
   if (event.source !== window || !event.data) return;
+  if (!enabled) return;
   if (event.data.type === "CTP_SONG" && event.data.track) {
     applyTrack(event.data.track);
   }
   if (event.data.type === "CTP_TIME" && Number.isFinite(event.data.currentTime)) {
     playbackTime = event.data.currentTime;
-    if (enabled) onPlayback();
+    if (typeof event.data.paused === "boolean") playbackPaused = event.data.paused;
+    onPlayback();
   }
 }
 
@@ -126,7 +141,8 @@ function onPlayerTabChosen(tab) {
 
 function bindObservers() {
   let scheduled = false;
-  const schedule = () => {
+  const schedule = (mutations) => {
+    if (mutations && mutationsFromOwnUi(mutations)) return;
     if (scheduled) return;
     scheduled = true;
     requestAnimationFrame(() => {
@@ -137,16 +153,34 @@ function bindObservers() {
 
   const observer = new MutationObserver(schedule);
   observer.observe(document.documentElement, {
-    childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ["disabled", "aria-selected", "page-type", "is-advertisement", "player-ui-state"],
+    attributeFilter: [
+      "disabled",
+      "aria-selected",
+      "page-type",
+      "is-advertisement",
+      "player-ui-state",
+      "player-fullscreened",
+      "player-fullscreened_",
+      "fullscreen",
+    ],
   });
   observers.push(observer);
 
   tabsObserver = new MutationObserver(schedule);
   observers.push(tabsObserver);
   watchPlayerTabs();
+}
+
+function mutationsFromOwnUi(mutations) {
+  if (!mutations?.length) return false;
+  for (const mutation of mutations) {
+    const node = mutation.target;
+    const el = node.nodeType === 1 ? node : node.parentElement;
+    if (!el?.closest?.("#ctp-player-ticker, #ctp-lyrics-root, #ctp-boot-status")) return false;
+  }
+  return true;
 }
 
 function watchPlayerTabs() {
@@ -165,6 +199,7 @@ function watchPlayerTabs() {
 
 function tick() {
   if (!enabled) return;
+  syncFullscreenState();
   watchPlayerTabs();
   enableLyricsTab();
   ensureTicker();
@@ -201,9 +236,11 @@ function applyTrack(track) {
   currentTrack = cleaned;
   lyricsState = { status: "loading", track: cleaned };
   activeIndex = -1;
+  lastProgressKey = "";
   log("track changed", cleaned);
   render();
   updateTicker();
+  syncTimeNeed();
   void loadLyrics(cleaned);
 }
 
@@ -224,6 +261,7 @@ async function loadLyrics(track) {
   }
   render();
   updateTicker();
+  syncTimeNeed();
 }
 
 function onPlayback() {
@@ -232,19 +270,22 @@ function onPlayback() {
     updateTicker();
     return;
   }
+  const root = document.getElementById(ROOT_ID);
+  const lyricsVisible = Boolean(root && !root.hidden);
   const next = activeLineIndex(lines, playbackTime + 0.05);
   if (next !== activeIndex) {
     activeIndex = next;
-    paintActiveLine();
+    if (lyricsVisible) paintActiveLine();
     updateTicker();
     return;
   }
-  updateProgress();
+  if (lyricsVisible && !playbackPaused) updateProgress();
 }
 
 function enableLyricsTab() {
   for (const tab of getPlayerTabs()) {
     if (!tabLooksLikeLyrics(tab)) continue;
+    tab.classList.add("ctp-lyrics-tab");
     const disabled =
       tab.hasAttribute("disabled") ||
       tab.getAttribute("aria-disabled") === "true" ||
@@ -316,12 +357,62 @@ function getTabRenderer() {
 }
 
 function setLyricsVisible(visible) {
+  const show = Boolean(visible) && !isPlayerFullscreen();
   const host = getTabRenderer();
-  host?.classList.toggle("ctp-lyrics-visible", visible);
+  host?.classList.toggle("ctp-lyrics-visible", show);
   const root = document.getElementById(ROOT_ID);
-  if (!root) return;
-  root.hidden = !visible;
-  root.setAttribute("aria-hidden", visible ? "false" : "true");
+  if (root) {
+    root.hidden = !show;
+    root.setAttribute("aria-hidden", show ? "false" : "true");
+  }
+  syncFullscreenState();
+  syncTimeNeed();
+}
+
+function isPlayerFullscreen() {
+  const layout = document.querySelector("ytmusic-app-layout, #layout");
+  if (layout?.hasAttribute("player-fullscreened")) return true;
+  if (layout?.getAttribute("player-ui-state") === "FULLSCREEN") return true;
+  const page = document.querySelector("ytmusic-player-page");
+  if (page?.hasAttribute("player-fullscreened") || page?.hasAttribute("player-fullscreened_")) return true;
+  if (page?.getAttribute("player-ui-state") === "FULLSCREEN") return true;
+  const player = document.querySelector("ytmusic-player");
+  if (player?.hasAttribute("fullscreen") || player?.hasAttribute("player-fullscreened")) return true;
+  if (player?.getAttribute("player-ui-state") === "FULLSCREEN") return true;
+  const bar = document.querySelector("ytmusic-player-bar");
+  if (bar?.hasAttribute("player-fullscreened") || bar?.hasAttribute("player-fullscreened_")) return true;
+  const movie = document.getElementById("movie_player");
+  if (movie?.classList.contains("ytp-fullscreen")) return true;
+  const fs = document.fullscreenElement;
+  if (!fs) return false;
+  if (fs.id === "movie_player" || fs.matches?.("video, ytmusic-player")) return true;
+  if (fs.closest?.("ytmusic-player, #movie_player")) return true;
+  const panel = getTabRenderer();
+  return Boolean(panel && !fs.contains(panel));
+}
+
+function syncFullscreenState() {
+  document.documentElement.classList.toggle("ctp-video-fs", isPlayerFullscreen());
+}
+
+function syncTimeNeed() {
+  const enabledNeed = Boolean(enabled && started);
+  const nextHighRes = Boolean(
+    enabledNeed && lyricsState.synced && isLyricsTabActive() && !isPlayerFullscreen()
+  );
+  if (enabledNeed === timeNeedEnabled && nextHighRes === highResWanted) return;
+  timeNeedEnabled = enabledNeed;
+  highResWanted = nextHighRes;
+  window.postMessage(
+    { type: "CTP_TIME_NEED", enabled: enabledNeed, highRes: nextHighRes },
+    "*"
+  );
+}
+
+function onFullscreenChange() {
+  syncFullscreenState();
+  ensureRoot();
+  syncTimeNeed();
 }
 
 function ensureRoot() {
@@ -331,7 +422,7 @@ function ensureRoot() {
     return null;
   }
 
-  const visible = isLyricsTabActive();
+  const visible = isLyricsTabActive() && !isPlayerFullscreen();
   let root = document.getElementById(ROOT_ID);
   if (root && root.parentElement !== host) {
     root.remove();
@@ -499,15 +590,20 @@ function paintActiveLine(force = false) {
 
 function updateProgress() {
   const root = document.getElementById(ROOT_ID);
-  const current = root?.querySelector(".ctp-line-active");
-  if (!current || !lyricsState.synced) return;
+  if (!root || root.hidden || !lyricsState.synced) return;
+  const current = root.querySelector(".ctp-line-active");
+  if (!current) return;
   const lines = lyricsState.lines || [];
   const start = Number(lines[activeIndex]?.time);
   const end = Number(lines[activeIndex + 1]?.time);
   if (!Number.isFinite(start)) return;
   const span = Number.isFinite(end) && end > start ? end - start : 4;
   const progress = Math.max(0, Math.min(1, (playbackTime - start) / span));
-  current.style.setProperty("--ctp-progress", progress.toFixed(4));
+  const value = progress.toFixed(4);
+  const key = `${activeIndex}:${value}`;
+  if (key === lastProgressKey) return;
+  lastProgressKey = key;
+  current.style.setProperty("--ctp-progress", value);
 }
 
 function paintAtmosphere() {
@@ -534,22 +630,22 @@ function ensureTicker() {
 function updateTicker() {
   const ticker = document.getElementById(TICKER_ID);
   if (!ticker) return;
-  if (!currentTrack) {
-    ticker.textContent = "ChudTube+ · waiting";
-    return;
+  let text = "ChudTube+ · waiting";
+  if (currentTrack) {
+    if (lyricsState.status === "loading" || lyricsState.status === "idle") {
+      text = "ChudTube+ · fetching lyrics";
+    } else if (lyricsState.status !== "found") {
+      text = `ChudTube+ · ${lyricsState.status.replaceAll("_", " ")}`;
+    } else {
+      const line = lyricsState.synced
+        ? lyricsState.lines?.[activeIndex] || lyricsState.lines?.[0]
+        : lyricsState.lines?.[0];
+      text = line?.text ? `♪ ${line.text}` : "ChudTube+ · lyrics ready — open Lyrics";
+    }
   }
-  if (lyricsState.status === "loading" || lyricsState.status === "idle") {
-    ticker.textContent = "ChudTube+ · fetching lyrics";
-    return;
-  }
-  if (lyricsState.status !== "found") {
-    ticker.textContent = `ChudTube+ · ${lyricsState.status.replaceAll("_", " ")}`;
-    return;
-  }
-  const line = lyricsState.synced
-    ? lyricsState.lines?.[activeIndex] || lyricsState.lines?.[0]
-    : lyricsState.lines?.[0];
-  ticker.textContent = line?.text ? `♪ ${line.text}` : "ChudTube+ · lyrics ready — open Lyrics";
+  if (text === lastTickerText && ticker.textContent === text) return;
+  lastTickerText = text;
+  ticker.textContent = text;
 }
 
 function showStatus(title, detail) {

@@ -3,6 +3,8 @@ ytmusic-tab-renderer.ctp-lyrics-visible > :not(#ctp-lyrics-root) {
   display: none !important;
 }
 
+/* Lyrics stay in the player-page side panel. Do not raise z-index: YTM video
+   fullscreen keeps the panel in the tree and a stacking context overlays the film. */
 #tab-renderer.ctp-lyrics-visible,
 ytmusic-tab-renderer.ctp-lyrics-visible {
   background: #000 !important;
@@ -62,11 +64,22 @@ ytmusic-player-bar .middle-controls {
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-width: 0;
   min-height: 100%;
   padding: 0 8px 32px;
+  overflow-x: hidden;
   background: #000;
   color: #f1f1f1;
   font-family: "YouTube Sans", "Google Sans", "Segoe UI Variable", "Segoe UI", sans-serif;
+}
+
+#ctp-lyrics-root *,
+#ctp-lyrics-root *::before,
+#ctp-lyrics-root *::after,
+.ctp-lyrics *,
+.ctp-lyrics *::before,
+.ctp-lyrics *::after {
+  box-sizing: border-box;
 }
 
 /* Author `display: flex` otherwise overrides the UA [hidden] rule. */
@@ -83,6 +96,7 @@ ytmusic-player-bar .middle-controls {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
   padding: 18px 16px 16px;
   background: linear-gradient(180deg, #000 55%, rgba(0, 0, 0, 0));
 }
@@ -92,6 +106,13 @@ ytmusic-player-bar .middle-controls {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ctp-track {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .ctp-art {
@@ -139,6 +160,7 @@ ytmusic-player-bar .middle-controls {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
   padding: 8vh 8px 18vh;
   mask-image: linear-gradient(180deg, transparent 0%, #000 7%, #000 90%, transparent 100%);
 }
@@ -148,7 +170,9 @@ ytmusic-player-bar .middle-controls {
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 10px;
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 12px 14px;
   border: 0;
@@ -311,10 +335,26 @@ ytmusic-player-bar .middle-controls {
   line-height: 1.55;
 }
 
-.tab-header[disabled],
-tp-yt-paper-tab[disabled] {
+ytmusic-player-page .tab-header.ctp-lyrics-tab[disabled],
+ytmusic-player-page tp-yt-paper-tab.ctp-lyrics-tab[disabled] {
   pointer-events: auto !important;
   opacity: 1 !important;
+}
+
+html.ctp-video-fs #ctp-player-ticker,
+html.ctp-video-fs #ctp-lyrics-root,
+html.ctp-video-fs #tab-renderer.ctp-lyrics-visible,
+ytmusic-app-layout[player-fullscreened] #ctp-player-ticker,
+ytmusic-app-layout[player-fullscreened] #ctp-lyrics-root,
+ytmusic-app-layout[player-fullscreened] #tab-renderer.ctp-lyrics-visible,
+ytmusic-app-layout[player-ui-state="FULLSCREEN"] #ctp-player-ticker,
+ytmusic-app-layout[player-ui-state="FULLSCREEN"] #ctp-lyrics-root,
+ytmusic-player-page[player-fullscreened] #ctp-lyrics-root,
+ytmusic-player-bar[player-fullscreened] #ctp-player-ticker,
+ytmusic-player-bar[player-fullscreened_] #ctp-player-ticker,
+:fullscreen #ctp-player-ticker,
+:fullscreen #ctp-lyrics-root {
+  display: none !important;
 }
 
 @media (max-width: 900px) {
