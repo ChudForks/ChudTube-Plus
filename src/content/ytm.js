@@ -26,7 +26,10 @@ let pollId = 0;
 let highResWanted = false;
 let timeNeedEnabled = false;
 let lastTickerText = "";
-let lastProgressKey = "";
+let lineWakeId = 0;
+let meterAnimation = null;
+let boundMedia = null;
+let mediaAbort = null;
 
 const VISIBILITY_LOCK_MS = 800;
 
@@ -61,6 +64,7 @@ function start() {
   document.addEventListener("iron-select", onIronSelect, true);
   bindObservers();
   document.addEventListener("fullscreenchange", onFullscreenChange);
+  document.addEventListener("visibilitychange", onVisibilityChange);
   pollId = window.setInterval(tick, 700);
   tick();
   syncFullscreenState();
@@ -76,19 +80,22 @@ function stop() {
   tabsObserver = null;
   document.removeEventListener("iron-select", onIronSelect, true);
   document.removeEventListener("fullscreenchange", onFullscreenChange);
+  document.removeEventListener("visibilitychange", onVisibilityChange);
   if (pollId) window.clearInterval(pollId);
   pollId = 0;
   if (showLyricsTimer) window.clearTimeout(showLyricsTimer);
   showLyricsTimer = 0;
   lyricsTabWanted = false;
   visibilityLock = null;
+  unbindMediaClock();
+  clearLineWake();
+  cancelMeter();
   teardownUi();
   currentKey = "";
   currentTrack = null;
   lyricsState = { status: "idle" };
   activeIndex = -1;
   lastTickerText = "";
-  lastProgressKey = "";
   document.documentElement.classList.remove("ctp-video-fs");
   syncTimeNeed();
 }
@@ -204,6 +211,7 @@ function tick() {
   enableLyricsTab();
   ensureTicker();
   ensureRoot();
+  bindMediaClock();
   if (!currentTrack) applyTrack(readNowPlaying());
   else if (!currentTrack.artwork) {
     const art = readArtwork();
@@ -236,7 +244,8 @@ function applyTrack(track) {
   currentTrack = cleaned;
   lyricsState = { status: "loading", track: cleaned };
   activeIndex = -1;
-  lastProgressKey = "";
+  clearLineWake();
+  cancelMeter();
   log("track changed", cleaned);
   render();
   updateTicker();
@@ -262,24 +271,34 @@ async function loadLyrics(track) {
   render();
   updateTicker();
   syncTimeNeed();
+  onPlayback();
 }
 
 function onPlayback() {
   const lines = lyricsState.lines;
   if (!lyricsState.synced || !lines?.length) {
+    clearLineWake();
+    cancelMeter();
     updateTicker();
     return;
   }
-  const root = document.getElementById(ROOT_ID);
-  const lyricsVisible = Boolean(root && !root.hidden);
+
+  playbackTime = getMediaTime();
   const next = activeLineIndex(lines, playbackTime + 0.05);
+  const lyricsVisible = isLyricsPanelVisible();
+
   if (next !== activeIndex) {
     activeIndex = next;
     if (lyricsVisible) paintActiveLine();
+    else cancelMeter();
     updateTicker();
-    return;
+  } else if (lyricsVisible) {
+    syncMeter(false);
+  } else {
+    cancelMeter();
   }
-  if (lyricsVisible && !playbackPaused) updateProgress();
+
+  scheduleLineWake();
 }
 
 function enableLyricsTab() {
@@ -361,9 +380,14 @@ function setLyricsVisible(visible) {
   const host = getTabRenderer();
   host?.classList.toggle("ctp-lyrics-visible", show);
   const root = document.getElementById(ROOT_ID);
+  const wasShown = Boolean(root && !root.hidden);
   if (root) {
     root.hidden = !show;
     root.setAttribute("aria-hidden", show ? "false" : "true");
+  }
+  if (show !== wasShown) {
+    if (show) syncMeter(true);
+    else cancelMeter();
   }
   syncFullscreenState();
   syncTimeNeed();
@@ -397,9 +421,9 @@ function syncFullscreenState() {
 
 function syncTimeNeed() {
   const enabledNeed = Boolean(enabled && started);
-  const nextHighRes = Boolean(
-    enabledNeed && lyricsState.synced && isLyricsTabActive() && !isPlayerFullscreen()
-  );
+  // Line sync is a next-line timer; the meter is a CSS animation. Never
+  // request the 60fps MAIN-world pump.
+  const nextHighRes = false;
   if (enabledNeed === timeNeedEnabled && nextHighRes === highResWanted) return;
   timeNeedEnabled = enabledNeed;
   highResWanted = nextHighRes;
@@ -413,6 +437,21 @@ function onFullscreenChange() {
   syncFullscreenState();
   ensureRoot();
   syncTimeNeed();
+  onPlayback();
+}
+
+function onVisibilityChange() {
+  if (document.hidden) {
+    pauseMeter();
+    clearLineWake();
+    return;
+  }
+  const video = getPlayerVideo();
+  if (video) {
+    playbackTime = video.currentTime;
+    playbackPaused = video.paused;
+  }
+  onPlayback();
 }
 
 function ensureRoot() {
@@ -476,6 +515,7 @@ function seekTo(time) {
 function render() {
   const root = document.getElementById(ROOT_ID) || ensureRoot();
   if (!root) return;
+  cancelMeter();
   root.dataset.ready = "1";
 
   if (isAdvertisement()) {
@@ -525,7 +565,7 @@ function render() {
         <span class="ctp-time">${stamp}</span>
         <span class="ctp-body">
           <span class="ctp-text">${text}</span>
-          <span class="ctp-meter" aria-hidden="true"></span>
+          <span class="ctp-meter" aria-hidden="true"><span class="ctp-meter-fill"></span></span>
         </span>
       </button>`;
     })
@@ -573,7 +613,8 @@ function paintActiveLine(force = false) {
     el.classList.toggle("ctp-line-next", index === activeIndex + 1);
     el.classList.toggle("ctp-line-soon", index === activeIndex + 2);
   });
-  updateProgress();
+  syncMeter(true);
+  scheduleLineWake();
 
   const follow = root.querySelector(".ctp-follow");
   const userHeld = Date.now() < userScrollingUntil;
@@ -588,22 +629,175 @@ function paintActiveLine(force = false) {
   current.scrollIntoView({ block: "center", inline: "nearest", behavior: force ? "auto" : "smooth" });
 }
 
-function updateProgress() {
+function isLyricsPanelVisible() {
   const root = document.getElementById(ROOT_ID);
-  if (!root || root.hidden || !lyricsState.synced) return;
-  const current = root.querySelector(".ctp-line-active");
-  if (!current) return;
+  return Boolean(root && !root.hidden);
+}
+
+function getMediaTime() {
+  const video = boundMedia || getPlayerVideo();
+  const time = Number(video?.currentTime);
+  return Number.isFinite(time) ? time : playbackTime;
+}
+
+function getPlaybackRate() {
+  const rate = Number((boundMedia || getPlayerVideo())?.playbackRate);
+  return Number.isFinite(rate) && rate > 0 ? rate : 1;
+}
+
+function isMediaWaiting() {
+  const video = boundMedia || getPlayerVideo();
+  if (!video) return false;
+  if (video.seeking) return true;
+  return !video.paused && video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA;
+}
+
+function bindMediaClock() {
+  const media = getPlayerVideo();
+  if (media === boundMedia) return;
+  unbindMediaClock();
+  boundMedia = media;
+  if (!media) return;
+  mediaAbort = new AbortController();
+  const { signal } = mediaAbort;
+  for (const type of [
+    "play",
+    "pause",
+    "playing",
+    "waiting",
+    "stalled",
+    "seeking",
+    "seeked",
+    "ratechange",
+    "timeupdate",
+  ]) {
+    media.addEventListener(type, onMediaClock, { signal });
+  }
+}
+
+function unbindMediaClock() {
+  mediaAbort?.abort();
+  mediaAbort = null;
+  boundMedia = null;
+}
+
+function onMediaClock(event) {
+  if (!enabled || !started) return;
+  const video = event.currentTarget;
+  playbackTime = video.currentTime;
+  playbackPaused = video.paused;
+  if (event.type === "waiting" || event.type === "stalled" || event.type === "seeking") {
+    pauseMeter();
+    clearLineWake();
+    return;
+  }
+  onPlayback();
+}
+
+function clearLineWake() {
+  if (!lineWakeId) return;
+  window.clearTimeout(lineWakeId);
+  lineWakeId = 0;
+}
+
+function scheduleLineWake() {
+  clearLineWake();
+  if (!enabled || !started) return;
+  if (!lyricsState.synced || !lyricsState.lines?.length) return;
+  if (playbackPaused || isMediaWaiting() || document.hidden) return;
+
+  const lines = lyricsState.lines;
+  const t = getMediaTime();
+  const idx = activeLineIndex(lines, t + 0.05);
+  const nextLine = lines[idx + 1];
+  if (!nextLine || !Number.isFinite(nextLine.time)) return;
+
+  const rate = getPlaybackRate();
+  const delay = ((nextLine.time - 0.05) - t) / rate * 1000;
+  if (!Number.isFinite(delay)) return;
+  lineWakeId = window.setTimeout(onLineWake, delay > 0 ? delay : 16);
+}
+
+function onLineWake() {
+  lineWakeId = 0;
+  const video = boundMedia || getPlayerVideo();
+  if (video) {
+    playbackTime = video.currentTime;
+    playbackPaused = video.paused;
+  }
+  onPlayback();
+}
+
+function pauseMeter() {
+  meterAnimation?.pause();
+}
+
+function cancelMeter() {
+  if (!meterAnimation) return;
+  try {
+    if (meterAnimation.playState !== "idle") meterAnimation.commitStyles();
+  } catch {
+    // Element may already be gone.
+  }
+  meterAnimation.cancel();
+  meterAnimation = null;
+}
+
+function syncMeter(force = false) {
+  const root = document.getElementById(ROOT_ID);
+  if (!root || root.hidden || !lyricsState.synced) {
+    cancelMeter();
+    return;
+  }
+  const fill = root.querySelector(".ctp-line-active .ctp-meter-fill");
+  if (!fill) {
+    cancelMeter();
+    return;
+  }
+
   const lines = lyricsState.lines || [];
   const start = Number(lines[activeIndex]?.time);
   const end = Number(lines[activeIndex + 1]?.time);
-  if (!Number.isFinite(start)) return;
+  if (!Number.isFinite(start)) {
+    cancelMeter();
+    return;
+  }
+
   const span = Number.isFinite(end) && end > start ? end - start : 4;
-  const progress = Math.max(0, Math.min(1, (playbackTime - start) / span));
-  const value = progress.toFixed(4);
-  const key = `${activeIndex}:${value}`;
-  if (key === lastProgressKey) return;
-  lastProgressKey = key;
-  current.style.setProperty("--ctp-progress", value);
+  const duration = span * 1000;
+  const mediaTime = getMediaTime();
+  const elapsed = Math.max(0, Math.min(span, mediaTime - start)) * 1000;
+  const rate = getPlaybackRate();
+  const hold = playbackPaused || isMediaWaiting() || document.hidden;
+  const computed = meterAnimation?.effect?.getComputedTiming?.();
+  const reuse =
+    !force &&
+    meterAnimation &&
+    meterAnimation.playState !== "idle" &&
+    meterAnimation.effect?.target === fill &&
+    Math.abs(Number(computed?.duration) - duration) < 1;
+
+  if (!reuse) {
+    cancelMeter();
+    fill.style.transform = "";
+    meterAnimation = fill.animate(
+      [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+      { duration, easing: "linear", fill: "forwards" }
+    );
+    meterAnimation.playbackRate = rate;
+    if (hold) meterAnimation.pause();
+    else meterAnimation.play();
+    meterAnimation.currentTime = elapsed;
+    return;
+  }
+
+  if (Math.abs(meterAnimation.playbackRate - rate) > 0.01) {
+    meterAnimation.playbackRate = rate;
+  }
+  const drift = Math.abs((meterAnimation.currentTime || 0) - elapsed);
+  if (drift > 80) meterAnimation.currentTime = elapsed;
+  if (hold) meterAnimation.pause();
+  else if (meterAnimation.playState !== "finished") meterAnimation.play();
 }
 
 function paintAtmosphere() {

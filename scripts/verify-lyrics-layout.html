@@ -169,7 +169,6 @@ ytmusic-player-bar .middle-controls {
 }
 
 .ctp-line {
-  --ctp-progress: 0;
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 10px;
@@ -234,14 +233,15 @@ ytmusic-player-bar .middle-controls {
   transition: opacity 220ms ease;
 }
 
-.ctp-meter::after {
-  content: "";
+.ctp-meter-fill {
   display: block;
-  width: calc(var(--ctp-progress, 0) * 100%);
+  width: 100%;
   height: 100%;
   border-radius: inherit;
   background: var(--ctp-red);
   box-shadow: 0 0 10px rgba(255, 0, 0, 0.45);
+  transform: scaleX(0);
+  transform-origin: left center;
 }
 
 .ctp-line-past {
@@ -400,9 +400,9 @@ ytmusic-player-bar[player-fullscreened_] #ctp-player-ticker,
           <div class="ctp-badge">Synced</div>
         </div>
         <div class="ctp-list">
-          <button class="ctp-line ctp-line-active" type="button" style="--ctp-progress: 0.62">
+          <button class="ctp-line ctp-line-active" type="button">
             <span class="ctp-time">0:39</span>
-            <span class="ctp-body"><span class="ctp-text">I'm begging you to walk in my shoes any time with extra words that wrap</span><span class="ctp-meter"></span></span>
+            <span class="ctp-body"><span class="ctp-text">I'm begging you to walk in my shoes any time with extra words that wrap</span><span class="ctp-meter" aria-hidden="true"><span class="ctp-meter-fill" style="transform: scaleX(0.62)"></span></span></span>
           </button>
         </div>
       </div>

@@ -2,7 +2,19 @@
   if (!/(^|\.)music\.youtube\.com$/i.test(location.hostname)) return;
 
   const TICKER_ID = "ctp-player-ticker";
-  const MEDIA_EVENTS = ["play", "pause", "seeking", "seeked", "timeupdate", "ratechange", "emptied", "loadedmetadata"];
+  const MEDIA_EVENTS = [
+    "play",
+    "pause",
+    "playing",
+    "waiting",
+    "stalled",
+    "seeking",
+    "seeked",
+    "timeupdate",
+    "ratechange",
+    "emptied",
+    "loadedmetadata",
+  ];
 
   const state = {
     videoId: "",

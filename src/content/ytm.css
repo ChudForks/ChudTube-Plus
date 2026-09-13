@@ -166,7 +166,6 @@ ytmusic-player-bar .middle-controls {
 }
 
 .ctp-line {
-  --ctp-progress: 0;
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 10px;
@@ -231,14 +230,15 @@ ytmusic-player-bar .middle-controls {
   transition: opacity 220ms ease;
 }
 
-.ctp-meter::after {
-  content: "";
+.ctp-meter-fill {
   display: block;
-  width: calc(var(--ctp-progress, 0) * 100%);
+  width: 100%;
   height: 100%;
   border-radius: inherit;
   background: var(--ctp-red);
   box-shadow: 0 0 10px rgba(255, 0, 0, 0.45);
+  transform: scaleX(0);
+  transform-origin: left center;
 }
 
 .ctp-line-past {
