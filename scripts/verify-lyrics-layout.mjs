@@ -46,6 +46,10 @@ const html = `<!doctype html>
             <span class="ctp-time">0:39</span>
             <span class="ctp-body"><span class="ctp-text">I'm begging you to walk in my shoes any time with extra words that wrap</span><span class="ctp-meter" aria-hidden="true"><span class="ctp-meter-fill" style="transform: scaleX(0.62)"></span></span></span>
           </button>
+          <button class="ctp-line ctp-line-next" type="button">
+            <span class="ctp-time">0:43</span>
+            <span class="ctp-body"><span class="ctp-text">The next lyric line</span><span class="ctp-meter" aria-hidden="true"><span class="ctp-meter-fill"></span></span></span>
+          </button>
         </div>
       </div>
     </ytmusic-tab-renderer>
@@ -74,11 +78,18 @@ const metrics = await page.evaluate(() => {
   const comments = document.querySelector("tp-yt-paper-tab:not(.ctp-lyrics-tab)");
   const lyricsTab = document.querySelector("tp-yt-paper-tab.ctp-lyrics-tab");
   const ticker = document.getElementById("ctp-player-ticker");
+  const secondLine = document.querySelectorAll(".ctp-line")[1];
   const hostBox = host.getBoundingClientRect();
   const lineBox = line.getBoundingClientRect();
   const toolbarBox = toolbar.getBoundingClientRect();
   const badgeBox = badge.getBoundingClientRect();
   const songOverflow = song.scrollWidth - song.clientWidth;
+  const secondTopBefore = secondLine.getBoundingClientRect().top;
+  line.classList.remove("ctp-line-active");
+  line.classList.add("ctp-line-past");
+  secondLine.classList.remove("ctp-line-next");
+  secondLine.classList.add("ctp-line-active");
+  const secondTopAfter = secondLine.getBoundingClientRect().top;
   return {
     hostWidth: hostBox.width,
     lineWidth: lineBox.width,
@@ -90,6 +101,9 @@ const metrics = await page.evaluate(() => {
     lyricsPointer: getComputedStyle(lyricsTab).pointerEvents,
     lyricsOpacity: getComputedStyle(lyricsTab).opacity,
     tickerDisplay: getComputedStyle(ticker).display,
+    lineShiftAtTransition: Math.abs(secondTopAfter - secondTopBefore),
+    oldMeterOpacity: getComputedStyle(line.querySelector(".ctp-meter")).opacity,
+    newMeterOpacity: getComputedStyle(secondLine.querySelector(".ctp-meter")).opacity,
   };
 });
 
@@ -123,6 +137,8 @@ const checks = [
   ["line stays inside 320px panel", !metrics.lineOverflowsHost],
   ["Synced badge stays in toolbar", metrics.badgeInsideToolbar],
   ["long title truncates", metrics.songTruncates],
+  ["active-line transition keeps line geometry stable", metrics.lineShiftAtTransition < 0.5],
+  ["only the active progress meter is visible", metrics.oldMeterOpacity === "0" && metrics.newMeterOpacity === "1"],
   ["disabled-tab CSS is scoped to lyrics tab", !unscopedDisabled],
   ["lyrics disabled tab is clickable", metrics.lyricsPointer === "auto" && metrics.lyricsOpacity === "1"],
   ["comments disabled tab stays dimmed", Number(metrics.commentsOpacity) < 0.5],
