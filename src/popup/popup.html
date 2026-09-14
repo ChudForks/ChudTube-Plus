@@ -8,54 +8,44 @@
   </head>
   <body>
     <header class="header">
-      <img class="logo" src="../../icons/icon48.png" alt="" />
+      <img class="logo" src="../../icons/icon128.png" width="48" height="48" alt="" />
       <div>
-        <h1>ChudTube+</h1>
-        <p>Customize YouTube and YouTube Music</p>
+        <h1>ChudTube<span>+</span></h1>
+        <p>A better way to watch &amp; listen.</p>
       </div>
     </header>
 
-    <section class="card">
-      <div class="card-head">
-        <h2>YouTube</h2>
-        <span class="pill">Live</span>
-      </div>
-
-      <h3 class="subsection-title">Themes</h3>
-      <label class="setting">
-        <div class="copy">
-          <span class="setting-title">
-            True OLED black
-            <span class="theme-swatch" title="Pure #000"></span>
-          </span>
-          <span class="setting-help">
-            Replace YouTube's gray dark mode with true black (#000) so OLED pixels turn off. Forces dark appearance while on.
-          </span>
+    <main>
+      <div class="section-heading"><span>Your experience</span><span class="autosave">Auto-saved</span></div>
+      <section class="card" aria-labelledby="youtube-heading">
+        <div class="card-head">
+          <div class="service"><span class="service-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="5"/><path d="m10 9 5 3-5 3Z"/></svg></span><div><h2 id="youtube-heading">YouTube</h2><h3 class="subsection-title">Themes</h3></div></div>
+          <span class="pill" aria-hidden="true"></span>
         </div>
-        <input id="oledBlack" type="checkbox" />
-      </label>
-    </section>
-
-    <section class="card">
-      <div class="card-head">
-        <h2>YouTube Music</h2>
-        <span class="pill">Live</span>
-      </div>
-
-      <label class="setting">
-        <div class="copy">
-          <span class="setting-title">Follow-along lyrics</span>
-          <span class="setting-help">
-            Use official YouTube Music lyrics when available, with timestamped LRCLIB lyrics for follow-along playback. Click a timed line to seek.
+        <label class="setting">
+          <span class="copy">
+            <span class="setting-title">True OLED black <span class="theme-swatch" aria-hidden="true"></span></span>
+            <span class="setting-help" id="oled-help">Deeper blacks. Fewer distractions.<br>Replaces gray surfaces with pure black and keeps dark appearance on.</span>
           </span>
-        </div>
-        <input id="followAlongLyrics" type="checkbox" />
-      </label>
-    </section>
+          <input id="oledBlack" type="checkbox" role="switch" aria-label="True OLED black" aria-describedby="oled-help" />
+        </label>
+      </section>
 
-    <footer>
-      Lyrics via YouTube Music and <a href="https://lrclib.net" target="_blank" rel="noreferrer">LRCLIB</a>
-    </footer>
+      <section class="card" aria-labelledby="music-heading">
+        <div class="card-head">
+          <div class="service"><span class="service-icon music-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></svg></span><div><h2 id="music-heading">YouTube Music</h2><h3 class="subsection-title">Playback</h3></div></div>
+          <span class="pill" aria-hidden="true"></span>
+        </div>
+        <label class="setting">
+          <span class="copy">
+            <span class="setting-title">Follow-along lyrics</span>
+            <span class="setting-help" id="lyrics-help">Stay in the moment, line by line.<br>Official lyrics with timed lyrics from LRCLIB when available. Click a timed line to seek.</span>
+          </span>
+          <input id="followAlongLyrics" type="checkbox" role="switch" aria-label="Follow-along lyrics" aria-describedby="lyrics-help" />
+        </label>
+      </section>
+    </main>
+    <footer><span>Made for your everyday soundtrack.</span><span class="credits">Lyrics by YouTube Music &amp; <a href="https://lrclib.net" target="_blank" rel="noreferrer">LRCLIB <span aria-hidden="true">↗</span></a></span></footer>
     <script type="module" src="popup.js"></script>
   </body>
 </html>
