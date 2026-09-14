@@ -36,13 +36,14 @@ try {
     </ytmusic-app-layout>`);
 
   await page.evaluate(() => {
+    window.lyricsRequests = 0;
     window.chrome = {
       storage: {
         sync: { get: async () => ({ settings: { ytm: { followAlongLyrics: true } } }) },
         onChanged: { addListener() {}, removeListener() {} },
       },
       runtime: {
-        sendMessage: async () => ({
+        sendMessage: async () => (window.lyricsRequests++, {
           status: "not_found",
           source: "lrclib",
           synced: false,
@@ -73,6 +74,29 @@ try {
     ["shows YouTube and its lyric provider", result.footer === "YouTube Music · LyricFind"],
     ["marks native lyrics as unsynced", result.badge === "Unsynced"],
   ];
+  const stability = await page.evaluate(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const line = document.querySelector(".ctp-line");
+    const requests = window.lyricsRequests;
+    document.querySelector("#description").innerHTML = "YouTube   first line<br>YouTube second line";
+    const song = { title: "Official Song", artist: "Official Artist", videoId: "song-a", duration: 181 };
+    window.postMessage({ type: "CTP_SONG", track: song }, "*");
+    await wait(100);
+    window.postMessage({ type: "CTP_SONG", track: { ...song, duration: 183, album: "Album" } }, "*");
+    await wait(1500);
+    const stable = line === document.querySelector(".ctp-line") && window.lyricsRequests === requests;
+    document.querySelector(".tab-header").click();
+    await wait(100);
+    const tabStable = line === document.querySelector(".ctp-line");
+    window.postMessage({ type: "CTP_SONG", track: { ...song, videoId: "song-b" } }, "*");
+    await wait(100);
+    return { stable, tabStable, changed: window.lyricsRequests === requests + 1 };
+  });
+  checks.push(
+    ["metadata and whitespace updates preserve lyrics nodes and request count", stability.stable],
+    ["reselecting Lyrics preserves existing lines", stability.tabStable],
+    ["a different playback video fetches new lyrics", stability.changed],
+  );
   for (const [name, ok] of checks) {
     console.log(`${ok ? "ok  " : "FAIL"} ${name}`);
   }

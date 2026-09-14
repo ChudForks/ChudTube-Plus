@@ -1,7 +1,7 @@
 import { getSettings, onSettingsChanged } from "../lib/settings.js";
 import { activeLineIndex, formatTimestamp } from "../lib/lrc.js";
-import { getPlayerVideo, isAdvertisement, readArtwork, readNowPlaying, trackKey } from "../lib/ytm-track.js";
-import { youtubeLyricsFromText } from "../lib/youtube-lyrics.js";
+import { cleanTitle, getPlayerVideo, isAdvertisement, readArtwork, readNowPlaying, trackKey } from "../lib/ytm-track.js";
+import { normalizeLyrics, youtubeLyricsFromText } from "../lib/youtube-lyrics.js";
 
 const ROOT_ID = "ctp-lyrics-root";
 const TICKER_ID = "ctp-player-ticker";
@@ -34,6 +34,7 @@ let boundMedia = null;
 let mediaAbort = null;
 let previousYouTubeLyrics = "";
 let lastSeenNativeLyrics = "";
+let lastRender = null;
 
 const VISIBILITY_LOCK_MS = 800;
 
@@ -96,6 +97,7 @@ function stop() {
   cancelMeter();
   teardownUi();
   currentKey = "";
+  requestSeq++;
   currentTrack = null;
   lyricsState = { status: "idle" };
   playbackTime = 0;
@@ -233,6 +235,7 @@ function tick() {
       paintAtmosphere();
     }
   }
+  if (lastRender && lastRender.ad !== isAdvertisement()) render();
 }
 
 function applyTrack(track) {
@@ -245,9 +248,17 @@ function applyTrack(track) {
     duration: Number(track.duration) || readNowPlaying()?.duration || null,
     artwork: track.artwork || readArtwork() || "",
   };
+  const sameTrack = currentTrack && (
+    currentTrack.videoId && cleaned.videoId
+      ? currentTrack.videoId === cleaned.videoId
+      : cleanTitle(currentTrack.title).toLowerCase() === cleanTitle(cleaned.title).toLowerCase() &&
+        currentTrack.artist.toLowerCase() === cleaned.artist.toLowerCase()
+  );
   const key = trackKey(cleaned);
-  if (!key || key === currentKey) {
+  if (!key || sameTrack) {
     currentTrack = currentTrack || cleaned;
+    // Enrich the DOM fallback without restarting its in-flight lyrics request.
+    if (!currentTrack.videoId) currentTrack.videoId = cleaned.videoId;
     if (cleaned.artwork && currentTrack.artwork !== cleaned.artwork) {
       currentTrack.artwork = cleaned.artwork;
       paintAtmosphere();
@@ -277,7 +288,7 @@ async function loadLyrics(track) {
   const seq = ++requestSeq;
   try {
     const result = await sendMessage({ type: "CTP_FETCH_LYRICS", track });
-    if (seq !== requestSeq || trackKey(track) !== currentKey) return;
+    if (seq !== requestSeq) return;
     const next = result || { status: "error", error: "Empty response" };
     // Keep official YouTube lyrics unless LRCLIB can add timestamps.
     if (lyricsState.source !== "youtube" || (next.status === "found" && next.synced)) {
@@ -304,7 +315,7 @@ function maybeUseYouTubeLyrics() {
   if (!currentTrack || !/LYRICS/i.test(getTabPageType())) return;
   if (lyricsState.status === "found" && lyricsState.synced) return;
 
-  const plain = readNativeLyricsText();
+  const plain = normalizeLyrics(readNativeLyricsText());
   if (plain) lastSeenNativeLyrics = plain;
   if (!plain || plain === previousYouTubeLyrics || plain === lyricsState.plain) return;
   const attribution = readNativeLyricsAttribution();
@@ -603,10 +614,14 @@ function seekTo(time) {
 function render() {
   const root = document.getElementById(ROOT_ID) || ensureRoot();
   if (!root) return;
+  const ad = isAdvertisement();
+  if (lastRender?.root === root && lastRender.state === lyricsState &&
+      lastRender.key === currentKey && lastRender.ad === ad) return;
+  lastRender = { root, state: lyricsState, key: currentKey, ad };
   cancelMeter();
   root.dataset.ready = "1";
 
-  if (isAdvertisement()) {
+  if (ad) {
     showStatus("Ad playing", "Lyrics resume after the ad.");
     return;
   }
