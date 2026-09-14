@@ -273,6 +273,23 @@ const live = await page2.evaluate(async () => {
   document.querySelector("video").pause();
   await wait(40);
   const pausedAnims = meterAnims();
+  const pausedPlayState = pausedAnims[0]?.playState || "";
+  Object.defineProperty(document.querySelector("video"), "currentTime", {
+    configurable: true,
+    get: () => 199,
+  });
+  window.postMessage({
+    type: "CTP_SONG",
+    track: { videoId: "autoplay-next", title: "Next Song", artist: "Artist", duration: 200 },
+  }, "*");
+  window.postMessage({
+    type: "CTP_TIME",
+    videoId: "autoplay-next",
+    currentTime: 0.1,
+    paused: true,
+  }, "*");
+  await wait(80);
+  const autoplayText = document.querySelector(".ctp-line-active .ctp-text")?.textContent;
   return {
     beforeText,
     afterText,
@@ -281,12 +298,13 @@ const live = await page2.evaluate(async () => {
     afterPlayState: afterAnims[0]?.playState || "",
     beforeTime,
     midTime,
-    pausedPlayState: pausedAnims[0]?.playState || "",
+    pausedPlayState,
     animCountBefore: beforeAnims.length,
     animCountAfter: afterAnims.length,
     fillClass: fill?.className || "",
     highResRequested: (window.__ctpNeed || []).some((item) => item.highRes),
     lineCount: document.querySelectorAll("#ctp-lyrics-root .ctp-line").length,
+    autoplayText,
   };
 });
 
@@ -324,6 +342,7 @@ const checks = [
   ["live meter runs as a CSS animation", live.midTime - live.beforeTime > 40],
   ["live wake advances the active line", live.beforeText === "one" && live.afterText === "two"],
   ["live meter pauses with playback", live.pausedPlayState === "paused"],
+  ["autoplay resets lyrics despite a stale media-element time", live.autoplayText === "one"],
 ];
 
 for (const [name, ok] of checks) {

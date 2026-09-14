@@ -1,5 +1,6 @@
 import { activeLineIndex, formatTimestamp, parseLrc } from "../src/lib/lrc.js";
 import { fetchLyrics } from "../src/lib/lrclib.js";
+import { normalizeLyrics, youtubeLyricsFromText } from "../src/lib/youtube-lyrics.js";
 
 const sample = `[ar:The Weeknd]
 [ti:Blinding Lights]
@@ -24,6 +25,16 @@ assert("skips metadata tags", !lines.some((line) => line.text.includes("The Week
 assert("expands multi-stamp rows", lines.filter((line) => line.text === "duplicated stamp test").length === 2);
 assert("formats clocks", formatTimestamp(13.13) === "0:13" && formatTimestamp(80) === "1:20");
 assert("active line is previous stamp", activeLineIndex(lines, 28) === 1);
+
+const youtube = youtubeLyricsFromText(" First line \n\n Second   line ", "Source: LyricFind");
+assert("normalizes YouTube lyric text", normalizeLyrics(" A  line\r\n\nB ") === "A line\nB");
+assert(
+  "maps YouTube lyrics to the shared result format",
+  youtube?.source === "youtube" &&
+    youtube.provider === "LyricFind" &&
+    youtube.synced === false &&
+    youtube.lines.length === 2
+);
 
 const remote = await fetchLyrics({
   title: "Blinding Lights",

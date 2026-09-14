@@ -120,6 +120,7 @@
     window.postMessage(
       {
         type: "CTP_TIME",
+        videoId: videoId(),
         currentTime: t,
         duration: d,
         paused,
