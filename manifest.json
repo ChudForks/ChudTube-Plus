@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "ChudTube+",
   "short_name": "ChudTube+",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Customize YouTube and YouTube Music. True OLED black on YouTube, follow-along lyrics on YouTube Music.",
   "minimum_chrome_version": "120",
   "icons": {

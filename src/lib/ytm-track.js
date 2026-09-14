@@ -43,7 +43,7 @@ export function isAdvertisement(root = document) {
 
 export function trackKey(track) {
   if (!track) return "";
-  return [track.title, track.artist, track.album || "", track.duration || ""]
+  return [track.videoId || "", track.title, track.artist, track.album || "", track.duration || ""]
     .join("|||")
     .toLowerCase();
 }

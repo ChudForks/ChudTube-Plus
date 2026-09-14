@@ -2,7 +2,7 @@
 
 Chromium extension that customizes YouTube and YouTube Music.
 
-YouTube ships a **True OLED black** theme. YouTube Music ships **Follow-along lyrics**, which replaces the native lyrics tab with timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
+YouTube ships a **True OLED black** theme. YouTube Music ships **Follow-along lyrics**, which uses official YouTube Music lyrics and timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
 
 ## What it does
 
@@ -17,9 +17,10 @@ YouTube ships a **True OLED black** theme. YouTube Music ships **Follow-along ly
 
 - Watches the current YouTube Music track
 - Looks up synced lyrics on LRCLIB (`/api/get`, then `/api/search`)
-- Turns the lyrics tab into a follow-along view with timestamps
+- Uses the lyrics supplied by YouTube Music when LRCLIB has no synced match
+- Turns the lyrics tab into a clean lyrics view, with timestamps when available
 - Highlights the current line as the song plays
-- Click a line to seek
+- Click a timed line to seek
 - Falls back to unsynced LRCLIB text when timestamps are missing
 - Toggle it from the toolbar popup
 
@@ -41,7 +42,7 @@ Click the ChudTube+ icon:
 | Setting | Default | Effect |
 | --- | --- | --- |
 | YouTube → Themes → True OLED black | On | Pure `#000` chrome on youtube.com |
-| YouTube Music → Follow-along lyrics | On | Inject timestamped LRCLIB lyrics into the lyrics tab |
+| YouTube Music → Follow-along lyrics | On | Use YouTube Music lyrics plus timestamped LRCLIB lyrics in the lyrics tab |
 
 ## Permissions
 
@@ -65,6 +66,7 @@ src/lib/ytm-track.js       now-playing metadata
 src/content/yt.js          YouTube themes
 src/content/yt.css
 src/content/ytm.js         YouTube Music injection
+src/lib/youtube-lyrics.js  YouTube Music lyric normalization
 src/content/ytm.css
 src/popup/                 toolbar popup
 ```

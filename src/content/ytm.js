@@ -1,6 +1,7 @@
 import { getSettings, onSettingsChanged } from "../lib/settings.js";
 import { activeLineIndex, formatTimestamp } from "../lib/lrc.js";
 import { getPlayerVideo, isAdvertisement, readArtwork, readNowPlaying, trackKey } from "../lib/ytm-track.js";
+import { youtubeLyricsFromText } from "../lib/youtube-lyrics.js";
 
 const ROOT_ID = "ctp-lyrics-root";
 const TICKER_ID = "ctp-player-ticker";
@@ -17,6 +18,7 @@ let activeIndex = -1;
 let userScrollingUntil = 0;
 let playbackTime = 0;
 let playbackPaused = true;
+let pageClockUpdatedAt = 0;
 let lyricsTabWanted = false;
 let visibilityLock = null;
 let showLyricsTimer = 0;
@@ -30,6 +32,8 @@ let lineWakeId = 0;
 let meterAnimation = null;
 let boundMedia = null;
 let mediaAbort = null;
+let previousYouTubeLyrics = "";
+let lastSeenNativeLyrics = "";
 
 const VISIBILITY_LOCK_MS = 800;
 
@@ -94,6 +98,8 @@ function stop() {
   currentKey = "";
   currentTrack = null;
   lyricsState = { status: "idle" };
+  playbackTime = 0;
+  pageClockUpdatedAt = 0;
   activeIndex = -1;
   lastTickerText = "";
   document.documentElement.classList.remove("ctp-video-fs");
@@ -107,7 +113,13 @@ function onPageMessage(event) {
     applyTrack(event.data.track);
   }
   if (event.data.type === "CTP_TIME" && Number.isFinite(event.data.currentTime)) {
+    if (
+      event.data.videoId &&
+      currentTrack?.videoId &&
+      event.data.videoId !== currentTrack.videoId
+    ) return;
     playbackTime = event.data.currentTime;
+    pageClockUpdatedAt = performance.now();
     if (typeof event.data.paused === "boolean") playbackPaused = event.data.paused;
     onPlayback();
   }
@@ -211,6 +223,7 @@ function tick() {
   enableLyricsTab();
   ensureTicker();
   ensureRoot();
+  maybeUseYouTubeLyrics();
   bindMediaClock();
   if (!currentTrack) applyTrack(readNowPlaying());
   else if (!currentTrack.artwork) {
@@ -225,6 +238,7 @@ function tick() {
 function applyTrack(track) {
   if (!track?.title || !track.artist) return;
   const cleaned = {
+    videoId: track.videoId || "",
     title: track.title,
     artist: String(track.artist).split(/\s*[•·]\s*/)[0].trim(),
     album: track.album || "",
@@ -241,7 +255,13 @@ function applyTrack(track) {
     return;
   }
   currentKey = key;
+  previousYouTubeLyrics = lastSeenNativeLyrics;
   currentTrack = cleaned;
+  // YouTube reuses its media element between autoplayed tracks. Its raw
+  // currentTime can briefly remain at the previous song's duration, so make
+  // the new track start from zero until the page-player clock arrives.
+  playbackTime = 0;
+  pageClockUpdatedAt = performance.now();
   lyricsState = { status: "loading", track: cleaned };
   activeIndex = -1;
   clearLineWake();
@@ -258,20 +278,88 @@ async function loadLyrics(track) {
   try {
     const result = await sendMessage({ type: "CTP_FETCH_LYRICS", track });
     if (seq !== requestSeq || trackKey(track) !== currentKey) return;
-    lyricsState = result || { status: "error", error: "Empty response" };
+    const next = result || { status: "error", error: "Empty response" };
+    // Keep official YouTube lyrics unless LRCLIB can add timestamps.
+    if (lyricsState.source !== "youtube" || (next.status === "found" && next.synced)) {
+      lyricsState = next;
+    }
     log("lyrics result", lyricsState.status, lyricsState.synced ? "synced" : "plain");
   } catch (error) {
     if (seq !== requestSeq) return;
-    lyricsState = {
-      status: "error",
-      error: error?.message || "Could not reach the lyrics service",
-    };
+    if (lyricsState.source !== "youtube") {
+      lyricsState = {
+        status: "error",
+        error: error?.message || "Could not reach the lyrics service",
+      };
+    }
     log("lyrics fetch failed", error);
   }
   render();
   updateTicker();
   syncTimeNeed();
   onPlayback();
+}
+
+function maybeUseYouTubeLyrics() {
+  if (!currentTrack || !/LYRICS/i.test(getTabPageType())) return;
+  if (lyricsState.status === "found" && lyricsState.synced) return;
+
+  const plain = readNativeLyricsText();
+  if (plain) lastSeenNativeLyrics = plain;
+  if (!plain || plain === previousYouTubeLyrics || plain === lyricsState.plain) return;
+  const attribution = readNativeLyricsAttribution();
+  const result = youtubeLyricsFromText(plain, attribution);
+  if (!result) return;
+
+  lyricsState = result;
+  activeIndex = -1;
+  log("lyrics result", "found", "youtube");
+  render();
+  updateTicker();
+  syncTimeNeed();
+}
+
+function getNativeLyricsShelf() {
+  const host = getTabRenderer();
+  if (!host) return null;
+  return (
+    host.querySelector("ytmusic-description-shelf-renderer") ||
+    host.querySelector("ytmusic-lyrics-description-shelf-renderer")
+  );
+}
+
+function readNativeLyricsText() {
+  const shelf = getNativeLyricsShelf();
+  if (!shelf) return "";
+  const description =
+    shelf.querySelector("#description") ||
+    shelf.querySelector(".description") ||
+    [...shelf.querySelectorAll("yt-formatted-string")].find(
+      (el) => !/^\s*source\s*:/i.test(el.textContent || "")
+    );
+  return formattedText(description);
+}
+
+function readNativeLyricsAttribution() {
+  const shelf = getNativeLyricsShelf();
+  if (!shelf) return "";
+  return (
+    [...shelf.querySelectorAll("yt-formatted-string")]
+      .map((el) => (el.textContent || "").trim())
+      .find((text) => /^source\s*:/i.test(text)) || ""
+  );
+}
+
+function formattedText(element) {
+  if (!element) return "";
+  const clone = element.cloneNode(true);
+  for (const br of clone.querySelectorAll("br")) br.replaceWith("\n");
+  return (clone.textContent || "")
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n");
 }
 
 function onPlayback() {
@@ -283,8 +371,8 @@ function onPlayback() {
     return;
   }
 
-  playbackTime = getMediaTime();
-  const next = activeLineIndex(lines, playbackTime + 0.05);
+  const currentTime = getMediaTime();
+  const next = activeLineIndex(lines, currentTime + 0.05);
   const lyricsVisible = isLyricsPanelVisible();
 
   if (next !== activeIndex) {
@@ -448,7 +536,7 @@ function onVisibilityChange() {
   }
   const video = getPlayerVideo();
   if (video) {
-    playbackTime = video.currentTime;
+    if (!pageClockIsFresh()) playbackTime = video.currentTime;
     playbackPaused = video.paused;
   }
   onPlayback();
@@ -529,7 +617,7 @@ function render() {
   }
 
   if (lyricsState.status === "loading" || lyricsState.status === "idle") {
-    showStatus("Fetching lyrics", `${currentTrack.title} · LRCLIB`);
+    showStatus("Fetching lyrics", `${currentTrack.title} · YouTube Music + LRCLIB`);
     return;
   }
 
@@ -539,7 +627,7 @@ function render() {
   }
 
   if (lyricsState.status === "not_found") {
-    showStatus("No lyrics on LRCLIB", "This track is not in the LRCLIB catalog yet.");
+    showStatus("No lyrics found", "Neither YouTube Music nor LRCLIB has lyrics for this track yet.");
     return;
   }
 
@@ -550,7 +638,7 @@ function render() {
 
   const lines = lyricsState.lines || [];
   if (!lines.length) {
-    showStatus("No lyrics on LRCLIB", "This track is not in the LRCLIB catalog yet.");
+    showStatus("No lyrics found", "Neither YouTube Music nor LRCLIB has lyrics for this track yet.");
     return;
   }
 
@@ -572,6 +660,8 @@ function render() {
     .join("");
 
   const sourceLabel = synced ? "Synced" : "Unsynced";
+  const sourceName = lyricsState.source === "youtube" ? "YouTube Music" : "LRCLIB";
+  const sourceDetail = lyricsState.provider ? ` · ${lyricsState.provider}` : "";
 
   root.innerHTML = `
     <div class="ctp-toolbar">
@@ -586,7 +676,7 @@ function render() {
     </div>
     <div class="ctp-list" role="list">${items}</div>
     <div class="ctp-footer">
-      <span>LRCLIB</span>
+      <span>${sourceName}${escapeHtml(sourceDetail)}</span>
       <button class="ctp-follow" type="button" hidden>Resume follow</button>
     </div>
   `;
@@ -635,9 +725,18 @@ function isLyricsPanelVisible() {
 }
 
 function getMediaTime() {
+  if (pageClockIsFresh()) {
+    if (playbackPaused) return playbackTime;
+    const elapsed = (performance.now() - pageClockUpdatedAt) / 1000;
+    return playbackTime + elapsed * getPlaybackRate();
+  }
   const video = boundMedia || getPlayerVideo();
   const time = Number(video?.currentTime);
   return Number.isFinite(time) ? time : playbackTime;
+}
+
+function pageClockIsFresh() {
+  return pageClockUpdatedAt > 0 && performance.now() - pageClockUpdatedAt < 2000;
 }
 
 function getPlaybackRate() {
@@ -684,7 +783,9 @@ function unbindMediaClock() {
 function onMediaClock(event) {
   if (!enabled || !started) return;
   const video = event.currentTarget;
-  playbackTime = video.currentTime;
+  if (!pageClockIsFresh()) {
+    playbackTime = video.currentTime;
+  }
   playbackPaused = video.paused;
   if (event.type === "waiting" || event.type === "stalled" || event.type === "seeking") {
     pauseMeter();
@@ -722,7 +823,7 @@ function onLineWake() {
   lineWakeId = 0;
   const video = boundMedia || getPlayerVideo();
   if (video) {
-    playbackTime = video.currentTime;
+    if (!pageClockIsFresh()) playbackTime = video.currentTime;
     playbackPaused = video.paused;
   }
   onPlayback();
