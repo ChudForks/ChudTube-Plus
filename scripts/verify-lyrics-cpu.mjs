@@ -26,14 +26,15 @@ const html = `<!doctype html>
         <video></video>
       </ytmusic-player>
       <ytmusic-player-page>
-        <tp-yt-paper-tab class="tab-header iron-selected" aria-selected="true">Lyrics</tp-yt-paper-tab>
+        <div class="tab-header-container">
+          <tp-yt-paper-tab class="tab-header iron-selected" aria-selected="true">Lyrics</tp-yt-paper-tab>
+        </div>
       </ytmusic-player-page>
       <ytmusic-tab-renderer id="tab-renderer"></ytmusic-tab-renderer>
   </body>
 </html>`;
 
-const file = path.join(root, "scripts", "verify-lyrics-cpu.html");
-fs.writeFileSync(file, html);
+const fixture = "file:///" + path.join(root, "scripts", "verify-lyrics-cpu.html").replace(/\\/g, "/");
 
 const browser = await puppeteer.launch({
   executablePath: brave,
@@ -41,7 +42,8 @@ const browser = await puppeteer.launch({
   args: ["--allow-file-access-from-files"],
 });
 const page = await browser.newPage();
-await page.goto("file:///" + file.replace(/\\/g, "/"), { waitUntil: "domcontentloaded" });
+await page.goto(fixture, { waitUntil: "domcontentloaded" });
+await page.setContent(html);
 await page.addScriptTag({ content: inject });
 
 const result = await page.evaluate(async () => {
@@ -186,7 +188,8 @@ const wake = await page.evaluate(async () => {
 });
 
 const page2 = await browser.newPage();
-await page2.goto("file:///" + file.replace(/\\/g, "/"), { waitUntil: "domcontentloaded" });
+await page2.goto(fixture, { waitUntil: "domcontentloaded" });
+await page2.setContent(html);
 await page2.addStyleTag({ content: cssSource });
 await page2.addScriptTag({ content: inject });
 await page2.evaluate(() => {
@@ -195,7 +198,10 @@ await page2.evaluate(() => {
       sync: {
         get: async () => ({ settings: { ytm: { followAlongLyrics: true } } }),
       },
-      onChanged: { addListener() {}, removeListener() {} },
+      onChanged: {
+        addListener(listener) { window.__ctpSettingsChanged = listener; },
+        removeListener() {},
+      },
     },
     runtime: {
       sendMessage: async (msg) => {
@@ -308,6 +314,48 @@ const live = await page2.evaluate(async () => {
   };
 });
 
+const regressions = await page2.evaluate(async () => {
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  const lyrics = document.querySelector(".tab-header");
+  const details = document.createElement("tp-yt-paper-tab");
+  details.className = "tab-header";
+  details.textContent = "Details";
+  lyrics.parentElement.appendChild(details);
+  const choose = (tab) => {
+    for (const item of [lyrics, details]) {
+      item.classList.toggle("iron-selected", item === tab);
+      item.setAttribute("aria-selected", item === tab ? "true" : "false");
+    }
+    tab.dispatchEvent(new CustomEvent("iron-select", { bubbles: true, detail: { item: tab } }));
+  };
+
+  window.postMessage({ type: "CTP_TIME", currentTime: 0.1, paused: true }, "*");
+  await wait(25);
+  choose(details);
+  await wait(25);
+  const hidden = document.querySelector("#ctp-lyrics-root")?.hidden === true;
+
+  window.postMessage({ type: "CTP_TIME", currentTime: 0.35, paused: true }, "*");
+  await wait(25);
+  choose(lyrics);
+  await wait(100);
+  const reopenedLine = document.querySelector(".ctp-line-active .ctp-text")?.textContent;
+
+  window.__ctpSettingsChanged(
+    { settings: { newValue: { ytm: { followAlongLyrics: false } } } },
+    "sync"
+  );
+  await wait(25);
+  lyrics.click();
+  await wait(100);
+  return {
+    hidden,
+    reopenedLine,
+    rootAfterDisabledClick: Boolean(document.getElementById("ctp-lyrics-root")),
+    nativeLyricsHidden: document.getElementById("tab-renderer").classList.contains("ctp-lyrics-visible"),
+  };
+});
+
 await browser.close();
 
 const sourceChecks = [
@@ -343,10 +391,12 @@ const checks = [
   ["live wake advances the active line", live.beforeText === "one" && live.afterText === "two"],
   ["live meter pauses with playback", live.pausedPlayState === "paused"],
   ["autoplay resets lyrics despite a stale media-element time", live.autoplayText === "one"],
+  ["hidden lyrics advance their active line", regressions.hidden && regressions.reopenedLine === "two"],
+  ["disabled lyrics cannot recreate the overlay", !regressions.rootAfterDisabledClick && !regressions.nativeLyricsHidden],
 ];
 
 for (const [name, ok] of checks) {
   console.log(ok ? "ok  " : "FAIL", name);
 }
-console.log(JSON.stringify({ result, meter, wake, live }, null, 2));
+console.log(JSON.stringify({ result, meter, wake, live, regressions }, null, 2));
 if (checks.some(([, ok]) => !ok)) process.exit(1);
