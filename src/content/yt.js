@@ -21,7 +21,7 @@ const OLED_VARS = {
 
 const overridden = new Map();
 let currentTheme = THEME_OLED;
-let forcedDark = false;
+const forcedDarkAttrs = new Set();
 let remapTimer = 0;
 let started = false;
 let sheetCss = "";
@@ -102,10 +102,9 @@ function applyTheme(theme) {
     unmountSheet();
     stamp(false);
     clearRemap();
-    if (forcedDark) {
-      DARK_ATTRS.forEach((name) => root.removeAttribute(name));
-      forcedDark = false;
-    }
+    releaseBootTheme();
+    for (const name of forcedDarkAttrs) root.removeAttribute(name);
+    forcedDarkAttrs.clear();
   }
 }
 
@@ -157,9 +156,21 @@ function ensureDark() {
   DARK_ATTRS.forEach((name) => {
     if (!root.hasAttribute(name)) {
       root.setAttribute(name, "");
-      forcedDark = true;
+      forcedDarkAttrs.add(name);
     }
   });
+}
+
+function releaseBootTheme() {
+  const state = globalThis.__ctpOledBootState;
+  if (!state) return;
+  const root = document.documentElement;
+  for (const name of state.darkAttributes || []) root.removeAttribute(name);
+  for (const [name, previous] of state.styles || []) {
+    if (previous.value) root.style.setProperty(name, previous.value, previous.priority);
+    else root.style.removeProperty(name);
+  }
+  delete globalThis.__ctpOledBootState;
 }
 
 function scheduleRemap() {

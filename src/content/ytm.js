@@ -128,6 +128,7 @@ function onPageMessage(event) {
 }
 
 function onDocumentClick(event) {
+  if (!enabled) return;
   const tab = event.target.closest?.(".tab-header, tp-yt-paper-tab, [role='tab']");
   if (!tab || !isPlayerPageTab(tab)) return;
   onPlayerTabChosen(tab);
@@ -141,6 +142,7 @@ function onIronSelect(event) {
 }
 
 function onPlayerTabChosen(tab) {
+  if (!enabled) return;
   const show = tabLooksLikeLyrics(tab);
   lockLyricsVisibility(show);
   if (showLyricsTimer) {
@@ -485,7 +487,7 @@ function setLyricsVisible(visible) {
     root.setAttribute("aria-hidden", show ? "false" : "true");
   }
   if (show !== wasShown) {
-    if (show) syncMeter(true);
+    if (show) paintActiveLine(true);
     else cancelMeter();
   }
   syncFullscreenState();
