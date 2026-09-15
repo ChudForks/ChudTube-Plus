@@ -84,6 +84,7 @@
       "matches": ["*://music.youtube.com/*", "*://*.music.youtube.com/*"],
       "resources": [
         "src/content/ytm.js",
+        "src/content/ytm-theme.js",
         "src/lib/*.js",
         "src/inject/ytm-main.js"
       ]
