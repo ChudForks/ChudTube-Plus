@@ -8,6 +8,8 @@ export const DEFAULT_SETTINGS = {
   },
   youtube: {
     theme: "oled-black",
+    hideShorts: false,
+    hidePlayables: false,
   },
 };
 
@@ -24,6 +26,8 @@ export function mergeSettings(stored) {
     },
     youtube: {
       theme: YOUTUBE_THEMES.includes(theme) ? theme : DEFAULT_SETTINGS.youtube.theme,
+      hideShorts: incoming.youtube?.hideShorts ?? DEFAULT_SETTINGS.youtube.hideShorts,
+      hidePlayables: incoming.youtube?.hidePlayables ?? DEFAULT_SETTINGS.youtube.hidePlayables,
     },
   };
 }

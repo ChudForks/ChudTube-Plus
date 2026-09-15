@@ -11,6 +11,8 @@ YouTube ships a **True OLED black** theme. YouTube Music ships a matching OLED p
 - Themes → **True OLED black**: true `#000` page chrome instead of YouTube's gray dark mode
 - OLED pixels can turn off on the large surfaces (home, watch, sidebar, masthead)
 - Forces YouTube's dark appearance while the theme is on
+- **Hide Shorts**: removes Shorts shelves, cards, and navigation links
+- **Hide Playables**: removes Playables shelves, cards, and navigation links
 - Toggle it from the toolbar popup
 
 ### YouTube Music
@@ -43,6 +45,8 @@ Click the ChudTube+ icon:
 | Setting | Default | Effect |
 | --- | --- | --- |
 | YouTube → Themes → True OLED black | On | Pure `#000` chrome on youtube.com |
+| YouTube → Hide Shorts | Off | Remove Shorts from feeds and navigation |
+| YouTube → Hide Playables | Off | Remove Playables from feeds and navigation |
 | YouTube Music → Themes → True OLED black | On | Pure `#000` persistent player bar on music.youtube.com |
 | YouTube Music → Follow-along lyrics | On | Use YouTube Music lyrics plus timestamped LRCLIB lyrics in the lyrics tab |
 

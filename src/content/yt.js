@@ -23,6 +23,10 @@ const overridden = new Map();
 let currentTheme = THEME_OLED;
 const forcedDarkAttrs = new Set();
 let remapTimer = 0;
+let featureFilterTimer = 0;
+let featureObserver = null;
+let hideShorts = false;
+let hidePlayables = false;
 let started = false;
 let sheetCss = "";
 
@@ -38,9 +42,20 @@ async function init() {
     console.warn("[ChudTube+] OLED stylesheet fetch failed", error);
   }
   const settings = await getSettings();
-  applyTheme(settings.youtube.theme);
-  onSettingsChanged((next) => applyTheme(next.youtube.theme));
+  applyYoutubeSettings(settings.youtube);
+  onSettingsChanged((next) => applyYoutubeSettings(next.youtube));
   if (!started) bindPage();
+}
+
+function applyYoutubeSettings(settings) {
+  applyTheme(settings.theme);
+  const root = document.documentElement;
+  hideShorts = Boolean(settings.hideShorts);
+  hidePlayables = Boolean(settings.hidePlayables);
+  root.toggleAttribute("data-ctp-hide-shorts", hideShorts);
+  root.toggleAttribute("data-ctp-hide-playables", hidePlayables);
+  syncFeatureObserver();
+  scheduleFeatureFilter();
 }
 
 function bindPage() {
@@ -48,6 +63,9 @@ function bindPage() {
   document.addEventListener("yt-navigate-finish", scheduleRemap, true);
   document.addEventListener("yt-page-data-updated", scheduleRemap, true);
   window.addEventListener("yt-navigate-finish", scheduleRemap, true);
+  document.addEventListener("yt-navigate-finish", scheduleFeatureFilter, true);
+  document.addEventListener("yt-page-data-updated", scheduleFeatureFilter, true);
+  window.addEventListener("yt-navigate-finish", scheduleFeatureFilter, true);
 
   const attrObs = new MutationObserver(() => {
     if (currentTheme !== THEME_OLED) return;
@@ -86,6 +104,70 @@ function bindPage() {
 
   window.setTimeout(scheduleRemap, 250);
   window.setTimeout(scheduleRemap, 1500);
+  scheduleFeatureFilter();
+}
+
+function syncFeatureObserver() {
+  if (!hideShorts && !hidePlayables) {
+    featureObserver?.disconnect();
+    featureObserver = null;
+    return;
+  }
+  if (featureObserver) return;
+  featureObserver = new MutationObserver(scheduleFeatureFilter);
+  featureObserver.observe(document.documentElement, { childList: true, subtree: true });
+}
+
+function scheduleFeatureFilter() {
+  if (featureFilterTimer) return;
+  featureFilterTimer = window.requestAnimationFrame(() => {
+    featureFilterTimer = 0;
+    applyFeatureFilters();
+  });
+}
+
+function applyFeatureFilters() {
+  const entries = document.querySelectorAll(
+    "ytd-guide-entry-renderer, ytd-mini-guide-entry-renderer"
+  );
+  for (const entry of entries) {
+    const feature = featureForGuideEntry(entry);
+    if ((feature === "shorts" && hideShorts) || (feature === "playables" && hidePlayables)) {
+      entry.dataset.ctpHiddenFeature = feature;
+    } else {
+      delete entry.dataset.ctpHiddenFeature;
+    }
+  }
+}
+
+function featureForGuideEntry(entry) {
+  const link = entry.querySelector("a[href]") || entry.shadowRoot?.querySelector("a[href]");
+  const href = link?.getAttribute("href") || "";
+  if (/^\/shorts(?:[/?#]|$)/.test(href)) return "shorts";
+  if (/^\/playables(?:[/?#]|$)/.test(href)) return "playables";
+
+  // Renderer data lives in YouTube's page world, which content scripts cannot
+  // reliably read. The visible title is available in both worlds as a fallback.
+  const title = (
+    entry.querySelector("a[title]")?.getAttribute("title") || entry.textContent
+  ).trim().toLowerCase();
+  if (title === "shorts") return "shorts";
+  if (title === "playables") return "playables";
+
+  // Current guide entries use JavaScript navigation and omit href entirely.
+  // The Shorts entry is identified by its stable reel watch endpoint instead.
+  const data = entry.data;
+  const endpoint = data?.serviceEndpoint || data?.navigationEndpoint || {};
+  if (endpoint.reelWatchEndpoint) return "shorts";
+
+  // Playables uses a browse endpoint whose exact ID varies by YouTube rollout.
+  // Its endpoint data consistently contains the Playables route or identifier.
+  try {
+    if (JSON.stringify(endpoint).toLowerCase().includes("playables")) return "playables";
+  } catch {
+    // Ignore a malformed renderer while YouTube is replacing its guide.
+  }
+  return "";
 }
 
 function applyTheme(theme) {

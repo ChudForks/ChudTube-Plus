@@ -170,3 +170,34 @@ html[data-ctp-theme="oled-black"] .chip-bar {
   background: #000 !important;
   background-color: #000 !important;
 }
+
+/* YouTube changes the exact renderer used for shelves over time. These selectors
+   cover the current desktop and mobile navigation, feeds, and search results. */
+html[data-ctp-hide-shorts] ytd-reel-shelf-renderer,
+html[data-ctp-hide-shorts] ytd-rich-shelf-renderer[is-shorts],
+html[data-ctp-hide-shorts] ytd-shorts,
+html[data-ctp-hide-shorts] ytd-guide-entry-renderer[data-ctp-hidden-feature="shorts"],
+html[data-ctp-hide-shorts] ytd-mini-guide-entry-renderer[data-ctp-hidden-feature="shorts"],
+html[data-ctp-hide-shorts] ytd-guide-entry-renderer:has(a[href^="/shorts"]),
+html[data-ctp-hide-shorts] ytd-mini-guide-entry-renderer:has(a[href^="/shorts"]),
+html[data-ctp-hide-shorts] ytd-rich-section-renderer:has(ytd-reel-shelf-renderer),
+html[data-ctp-hide-shorts] ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+html[data-ctp-hide-shorts] ytd-rich-item-renderer:has(a[href^="/shorts/"]),
+html[data-ctp-hide-shorts] ytd-video-renderer:has(a[href^="/shorts/"]),
+html[data-ctp-hide-shorts] ytm-pivot-bar-item-renderer:has(a[href^="/shorts"]),
+html[data-ctp-hide-shorts] ytm-rich-item-renderer:has(a[href^="/shorts/"]) {
+  display: none !important;
+}
+
+html[data-ctp-hide-playables] ytd-playables-shelf-renderer,
+html[data-ctp-hide-playables] ytd-game-card-renderer,
+html[data-ctp-hide-playables] ytd-guide-entry-renderer[data-ctp-hidden-feature="playables"],
+html[data-ctp-hide-playables] ytd-mini-guide-entry-renderer[data-ctp-hidden-feature="playables"],
+html[data-ctp-hide-playables] ytd-guide-entry-renderer:has(a[href^="/playables"]),
+html[data-ctp-hide-playables] ytd-mini-guide-entry-renderer:has(a[href^="/playables"]),
+html[data-ctp-hide-playables] ytd-rich-section-renderer:has(ytd-playables-shelf-renderer),
+html[data-ctp-hide-playables] ytd-rich-item-renderer:has(a[href^="/playables"]),
+html[data-ctp-hide-playables] ytm-pivot-bar-item-renderer:has(a[href^="/playables"]),
+html[data-ctp-hide-playables] ytm-rich-item-renderer:has(a[href^="/playables"]) {
+  display: none !important;
+}
