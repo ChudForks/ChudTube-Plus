@@ -15,6 +15,7 @@
 
   try {
     mark("ChudTube+ loading…");
+    await import(chrome.runtime.getURL("src/content/ytm-theme.js"));
     await import(chrome.runtime.getURL("src/content/ytm.js"));
   } catch (error) {
     mark(`ChudTube+ failed to load: ${error?.message || error}`, error);

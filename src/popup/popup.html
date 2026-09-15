@@ -33,9 +33,16 @@
 
       <section class="card" aria-labelledby="music-heading">
         <div class="card-head">
-          <div class="service"><span class="service-icon music-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></svg></span><div><h2 id="music-heading">YouTube Music</h2><h3 class="subsection-title">Playback</h3></div></div>
+          <div class="service"><span class="service-icon music-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></svg></span><div><h2 id="music-heading">YouTube Music</h2><h3 class="subsection-title">Playback &amp; themes</h3></div></div>
           <span class="pill" aria-hidden="true"></span>
         </div>
+        <label class="setting">
+          <span class="copy">
+            <span class="setting-title">True OLED black <span class="theme-swatch" aria-hidden="true"></span></span>
+            <span class="setting-help" id="music-oled-help">Replaces the gray player bar with pure black.</span>
+          </span>
+          <input id="musicOledBlack" type="checkbox" role="switch" aria-label="YouTube Music True OLED black" aria-describedby="music-oled-help" />
+        </label>
         <label class="setting">
           <span class="copy">
             <span class="setting-title">Follow-along lyrics</span>

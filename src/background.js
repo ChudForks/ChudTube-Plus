@@ -18,12 +18,12 @@ const MUSIC_TAB_URLS = [
 chrome.runtime.onInstalled.addListener(() => {
   console.info("[ChudTube+] service worker ready");
   injectThemeIntoOpenTabs();
-  clearThemeFromMusicTabs();
+  applyThemeToMusicTabs();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   injectThemeIntoOpenTabs();
-  clearThemeFromMusicTabs();
+  applyThemeToMusicTabs();
 });
 
 async function injectThemeIntoOpenTabs() {
@@ -52,7 +52,11 @@ async function injectThemeIntoOpenTabs() {
   }
 }
 
-async function clearThemeFromMusicTabs() {
+async function applyThemeToMusicTabs(theme) {
+  if (theme === undefined) {
+    const stored = await chrome.storage.sync.get("settings");
+    theme = stored.settings?.ytm?.theme === "default" ? "default" : "oled-black";
+  }
   let tabs = [];
   try {
     tabs = await chrome.tabs.query({ url: MUSIC_TAB_URLS });
@@ -65,46 +69,25 @@ async function clearThemeFromMusicTabs() {
     try {
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        func: () => {
+        func: (nextTheme) => {
           const root = document.documentElement;
-          root.removeAttribute("data-ctp-theme");
-          document.getElementById("ctp-oled-style")?.remove();
-          const names = [
-            "background",
-            "background-color",
-            "color-scheme",
-            "--yt-spec-base-background",
-            "--yt-spec-raised-background",
-            "--yt-spec-menu-background",
-            "--yt-spec-brand-background-solid",
-            "--yt-spec-brand-background-primary",
-            "--yt-spec-general-background-a",
-            "--yt-spec-general-background-b",
-            "--yt-spec-general-background-c",
-            "--yt-sys-color-baseline--base-background",
-            "--yt-sys-color-baseline--raised-background",
-            "--yt-sys-color-baseline--menu-background",
-            "--ytmusic-background",
-            "--ytmusic-brand-background-solid",
-            "--ytmusic-nav-bar",
-            "--ytmusic-player-bar-background",
-            "--ytmusic-generic-background-a",
-            "--ytmusic-generic-background-b",
-            "--ytmusic-generic-background-c",
-            "--ytmusic-color-black1",
-            "--ytmusic-search-background",
-          ];
-          for (const el of [root, document.body, document.querySelector("ytmusic-app")]) {
-            if (!el?.style) continue;
-            for (const name of names) el.style.removeProperty(name);
-          }
+          const enabled = nextTheme === "oled-black";
+          root.toggleAttribute("data-ctp-ytm-theme", enabled);
+          if (enabled) root.setAttribute("data-ctp-ytm-theme", "oled-black");
         },
+        args: [theme],
       });
     } catch (error) {
-      console.warn("[ChudTube+] music theme clear failed", tab.id, error);
+      console.warn("[ChudTube+] music theme apply failed", tab.id, error);
     }
   }
 }
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "sync" || !changes.settings) return;
+  const theme = changes.settings.newValue?.ytm?.theme === "default" ? "default" : "oled-black";
+  applyThemeToMusicTabs(theme);
+});
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type !== "CTP_FETCH_LYRICS") return false;

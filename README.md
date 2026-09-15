@@ -2,7 +2,7 @@
 
 Chromium extension that customizes YouTube and YouTube Music.
 
-YouTube ships a **True OLED black** theme. YouTube Music ships **Follow-along lyrics**, which uses official YouTube Music lyrics and timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
+YouTube ships a **True OLED black** theme. YouTube Music ships a matching OLED player bar and **Follow-along lyrics**, which uses official YouTube Music lyrics and timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
 
 ## What it does
 
@@ -15,6 +15,7 @@ YouTube ships a **True OLED black** theme. YouTube Music ships **Follow-along ly
 
 ### YouTube Music
 
+- Themes → **True OLED black**: true `#000` persistent player bar instead of its gray surface
 - Watches the current YouTube Music track
 - Looks up synced lyrics on LRCLIB (`/api/get`, then `/api/search`)
 - Uses the lyrics supplied by YouTube Music when LRCLIB has no synced match
@@ -42,6 +43,7 @@ Click the ChudTube+ icon:
 | Setting | Default | Effect |
 | --- | --- | --- |
 | YouTube → Themes → True OLED black | On | Pure `#000` chrome on youtube.com |
+| YouTube Music → Themes → True OLED black | On | Pure `#000` persistent player bar on music.youtube.com |
 | YouTube Music → Follow-along lyrics | On | Use YouTube Music lyrics plus timestamped LRCLIB lyrics in the lyrics tab |
 
 ## Permissions
