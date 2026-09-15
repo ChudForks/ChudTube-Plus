@@ -5,7 +5,7 @@ try {
   const page = await browser.newPage();
   await page.setViewport({width:388,height:560,deviceScaleFactor:2});
   await page.evaluateOnNewDocument(() => {
-    window.saved = {ytm:{followAlongLyrics:true},youtube:{theme:'oled-black'}};
+    window.saved = {ytm:{followAlongLyrics:true},youtube:{theme:'oled-black',hideShorts:false,hidePlayables:false}};
     window.chrome = {storage:{sync:{get:async()=>({settings:window.saved}),set:async({settings})=>{window.saved=settings;}}}};
   });
   const errors=[];
@@ -16,6 +16,10 @@ try {
   await page.click('#oledBlack');
   await page.waitForFunction(()=>window.saved.youtube.theme==='default');
   assert.equal(await page.$eval('#followAlongLyrics',e=>e.checked),true);
+  await page.click('#hideShorts');
+  await page.waitForFunction(()=>window.saved.youtube.hideShorts===true);
+  await page.click('#hidePlayables');
+  await page.waitForFunction(()=>window.saved.youtube.hidePlayables===true);
   await page.click('#oledBlack');
   await page.focus('#followAlongLyrics');
   await page.keyboard.press('Space');
@@ -29,5 +33,5 @@ try {
   const height=await page.evaluate(()=>document.body.scrollHeight);
   await page.setViewport({width:388,height,deviceScaleFactor:2});
   await page.screenshot({path:'scripts/popup-premium.png'});
-  console.log('PASS: initial settings, click persistence, keyboard toggle, independent settings, icon load, layout, no JS errors.');
+  console.log('PASS: initial settings, click persistence, keyboard toggle, independent settings, content filters, icon load, layout, no JS errors.');
 } finally { await browser.close(); }

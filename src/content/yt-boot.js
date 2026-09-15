@@ -37,7 +37,10 @@
   root.style.setProperty("--yt-sys-color-baseline--base-background", "#000", "important");
 
   chrome.storage.sync.get("settings", (result) => {
-    if (result?.settings?.youtube?.theme === "default") {
+    const youtube = result?.settings?.youtube;
+    root.toggleAttribute("data-ctp-hide-shorts", Boolean(youtube?.hideShorts));
+    root.toggleAttribute("data-ctp-hide-playables", Boolean(youtube?.hidePlayables));
+    if (youtube?.theme === "default") {
       restoreBootTheme();
     }
   });
