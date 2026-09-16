@@ -52,10 +52,17 @@
         </div>
         <label class="setting">
           <span class="copy">
-            <span class="setting-title">Auto-skip sponsored segments</span>
-            <span class="setting-help" id="sponsorblock-help">Reads community timestamps and skips sponsors on YouTube and YouTube Music. No submissions, votes, accounts, or view reporting.</span>
+            <span class="setting-title">Auto-skip marked segments</span>
+            <span class="setting-help" id="sponsorblock-help">Reads community timestamps and skips marked ranges on YouTube and YouTube Music. No submissions, votes, accounts, or view reporting.</span>
           </span>
-          <input id="sponsorBlockAutoSkip" type="checkbox" role="switch" aria-label="Auto-skip sponsored segments" aria-describedby="sponsorblock-help" />
+          <input id="sponsorBlockAutoSkip" type="checkbox" role="switch" aria-label="Auto-skip marked SponsorBlock segments" aria-describedby="sponsorblock-help" />
+        </label>
+        <label class="setting">
+          <span class="copy">
+            <span class="setting-title">Show colored segment markers</span>
+            <span class="setting-help" id="sponsorblock-markers-help">Shows SponsorBlock segments on the video timeline. Each category has its own color.</span>
+          </span>
+          <input id="sponsorBlockShowSegmentColors" type="checkbox" role="switch" aria-label="Show SponsorBlock colored segment markers" aria-describedby="sponsorblock-markers-help" />
         </label>
       </section>
 

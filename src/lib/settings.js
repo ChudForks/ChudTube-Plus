@@ -4,6 +4,7 @@ export const YTM_THEMES = ["default", "oled-black"];
 export const DEFAULT_SETTINGS = {
   sponsorBlock: {
     autoSkip: false,
+    showSegmentColors: true,
   },
   ytm: {
     followAlongLyrics: true,
@@ -22,6 +23,8 @@ export function mergeSettings(stored) {
   return {
     sponsorBlock: {
       autoSkip: incoming.sponsorBlock?.autoSkip ?? DEFAULT_SETTINGS.sponsorBlock.autoSkip,
+      showSegmentColors:
+        incoming.sponsorBlock?.showSegmentColors ?? DEFAULT_SETTINGS.sponsorBlock.showSegmentColors,
     },
     ytm: {
       followAlongLyrics:

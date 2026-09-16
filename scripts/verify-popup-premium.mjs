@@ -5,7 +5,7 @@ try {
   const page = await browser.newPage();
   await page.setViewport({width:388,height:560,deviceScaleFactor:2});
   await page.evaluateOnNewDocument(() => {
-    window.saved = {sponsorBlock:{autoSkip:false},ytm:{followAlongLyrics:true},youtube:{theme:'oled-black',hideShorts:false,hidePlayables:false}};
+    window.saved = {sponsorBlock:{autoSkip:false,showSegmentColors:true},ytm:{followAlongLyrics:true},youtube:{theme:'oled-black',hideShorts:false,hidePlayables:false}};
     window.chrome = {storage:{sync:{get:async()=>({settings:window.saved}),set:async({settings})=>{window.saved=settings;}}}};
   });
   const errors=[];
@@ -22,6 +22,9 @@ try {
   await page.waitForFunction(()=>window.saved.youtube.hidePlayables===true);
   await page.click('#sponsorBlockAutoSkip');
   await page.waitForFunction(()=>window.saved.sponsorBlock.autoSkip===true);
+  assert.equal(await page.$eval('#sponsorBlockShowSegmentColors',e=>e.checked),true);
+  await page.click('#sponsorBlockShowSegmentColors');
+  await page.waitForFunction(()=>window.saved.sponsorBlock.showSegmentColors===false);
   await page.click('#oledBlack');
   await page.focus('#followAlongLyrics');
   await page.keyboard.press('Space');
