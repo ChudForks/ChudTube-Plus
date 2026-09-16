@@ -29,6 +29,16 @@
           </span>
           <input id="oledBlack" type="checkbox" role="switch" aria-label="True OLED black" aria-describedby="oled-help" />
         </label>
+        <div class="setting-stack">
+          <label class="setting">
+            <span class="copy">
+              <span class="setting-title">Custom theme <span id="customSwatches" class="theme-swatches" aria-hidden="true"></span></span>
+              <span class="setting-help" id="custom-theme-help">Your colors on youtube.com. Edit colors opens a picker with a live preview of the page chrome.</span>
+            </span>
+            <input id="customTheme" type="checkbox" role="switch" aria-label="Custom theme" aria-describedby="custom-theme-help" />
+          </label>
+          <button type="button" class="ghost-btn" id="editCustomTheme">Edit colors</button>
+        </div>
         <label class="setting">
           <span class="copy">
             <span class="setting-title">Hide Shorts</span>
@@ -50,13 +60,11 @@
           <div class="service"><span class="service-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h10l3 3v10l-3 3H7l-3-3V7Z"/><path d="m9 8 7 4-7 4Z"/></svg></span><div><h2 id="sponsorblock-heading">SponsorBlock</h2><h3 class="subsection-title">Read-only integration</h3></div></div>
           <span class="pill" aria-hidden="true"></span>
         </div>
-        <label class="setting">
-          <span class="copy">
-            <span class="setting-title">Auto-skip marked segments</span>
-            <span class="setting-help" id="sponsorblock-help">Reads community timestamps and skips marked ranges on YouTube and YouTube Music. No submissions, votes, accounts, or view reporting.</span>
-          </span>
-          <input id="sponsorBlockAutoSkip" type="checkbox" role="switch" aria-label="Auto-skip marked SponsorBlock segments" aria-describedby="sponsorblock-help" />
-        </label>
+        <div class="sb-skip-block">
+          <span class="setting-title" id="sponsorblock-categories-title">Skip categories</span>
+          <span class="setting-help" id="sponsorblock-help">Community timestamps on YouTube and YouTube Music. Auto skips right away, Button shows a Skip control on the player, and Off leaves the segment alone. No submissions, votes, accounts, or view reporting.</span>
+          <div id="sponsorBlockCategories" class="sb-categories" role="group" aria-labelledby="sponsorblock-categories-title" aria-describedby="sponsorblock-help"></div>
+        </div>
         <label class="setting">
           <span class="copy">
             <span class="setting-title">Show colored segment markers</span>

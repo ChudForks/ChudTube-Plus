@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en" dark data-ctp-theme="oled-black">
+  <head>
+    <meta charset="utf-8" />
+    <title>ChudTube+ OLED preview</title>
+    <link rel="stylesheet" href="../src/content/yt.css" />
+    <style>
+      html {
+        --yt-spec-base-background: #0f0f0f;
+        --yt-spec-raised-background: #212121;
+        --yt-spec-menu-background: #282828;
+        --yt-spec-text-primary: #f1f1f1;
+        --yt-spec-text-secondary: #aaa;
+        background: var(--yt-spec-base-background);
+        color: var(--yt-spec-text-primary);
+        font: 13px/1.4 "Segoe UI", sans-serif;
+      }
+      body {
+        margin: 0;
+        background: var(--yt-spec-base-background);
+      }
+      ytd-app {
+        display: grid;
+        grid-template-columns: 72px 1fr;
+        grid-template-rows: 56px 1fr;
+        min-height: 100vh;
+        background: var(--yt-spec-base-background);
+      }
+      ytd-masthead {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 0 16px;
+        background: var(--yt-spec-base-background);
+        border-bottom: 1px solid var(--yt-spec-outline-opaque, #222);
+      }
+      ytd-mini-guide-renderer {
+        background: var(--yt-spec-base-background);
+        padding: 8px;
+      }
+      #chips-wrapper {
+        display: flex;
+        gap: 8px;
+        padding: 12px 24px 8px;
+        background: var(--yt-spec-base-background);
+      }
+      .ytChipShapeInactive {
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: #272727;
+      }
+      #contents {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        padding: 12px 24px 24px;
+        background: var(--yt-spec-base-background);
+      }
+      .card {
+        background: var(--yt-spec-raised-background);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .thumb {
+        height: 110px;
+        background: #111;
+      }
+      .meta {
+        padding: 10px 12px;
+        color: var(--yt-spec-text-secondary);
+      }
+      .logo {
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+      .search {
+        flex: 1;
+        max-width: 420px;
+        padding: 8px 14px;
+        border: 1px solid #333;
+        border-radius: 40px;
+        background: var(--ytd-searchbox-background, #0f0f0f);
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <ytd-app>
+      <ytd-masthead>
+        <span class="logo">YouTube</span>
+        <div class="search">Search</div>
+      </ytd-masthead>
+      <ytd-mini-guide-renderer>Home</ytd-mini-guide-renderer>
+      <div>
+        <div id="chips-wrapper">
+          <span class="ytChipShapeInactive">All</span>
+          <span class="ytChipShapeInactive">Music</span>
+          <span class="ytChipShapeInactive">Gaming</span>
+        </div>
+        <div id="contents">
+          <div class="card"><div class="thumb"></div><div class="meta">Video one</div></div>
+          <div class="card"><div class="thumb"></div><div class="meta">Video two</div></div>
+          <div class="card"><div class="thumb"></div><div class="meta">Video three</div></div>
+        </div>
+      </div>
+    </ytd-app>
+  </body>
+</html>
