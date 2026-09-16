@@ -11,6 +11,7 @@ function assert(name, condition) {
 assert("defaults to oled-black", DEFAULT_SETTINGS.youtube.theme === "oled-black");
 assert("Shorts stay visible by default", DEFAULT_SETTINGS.youtube.hideShorts === false);
 assert("Playables stay visible by default", DEFAULT_SETTINGS.youtube.hidePlayables === false);
+assert("SponsorBlock is opt-in", DEFAULT_SETTINGS.sponsorBlock.autoSkip === false);
 assert(
   "old ytm-only storage still gets youtube theme",
   mergeSettings({ ytm: { followAlongLyrics: false } }).youtube.theme === "oled-black"
@@ -31,6 +32,10 @@ assert(
   "preserves content filters",
   mergeSettings({ youtube: { hideShorts: true, hidePlayables: true } }).youtube.hideShorts &&
     mergeSettings({ youtube: { hideShorts: true, hidePlayables: true } }).youtube.hidePlayables
+);
+assert(
+  "preserves SponsorBlock auto-skip",
+  mergeSettings({ sponsorBlock: { autoSkip: true } }).sponsorBlock.autoSkip === true
 );
 
 const failed = checks.filter((item) => !item.ok);

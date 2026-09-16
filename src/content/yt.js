@@ -1,4 +1,5 @@
 import { getSettings, onSettingsChanged } from "../lib/settings.js";
+import "./sponsorblock.js";
 
 const THEME_OLED = "oled-black";
 const ATTR = "data-ctp-theme";

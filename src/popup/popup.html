@@ -45,6 +45,20 @@
         </label>
       </section>
 
+      <section class="card" aria-labelledby="sponsorblock-heading">
+        <div class="card-head">
+          <div class="service"><span class="service-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h10l3 3v10l-3 3H7l-3-3V7Z"/><path d="m9 8 7 4-7 4Z"/></svg></span><div><h2 id="sponsorblock-heading">SponsorBlock</h2><h3 class="subsection-title">Read-only integration</h3></div></div>
+          <span class="pill" aria-hidden="true"></span>
+        </div>
+        <label class="setting">
+          <span class="copy">
+            <span class="setting-title">Auto-skip sponsored segments</span>
+            <span class="setting-help" id="sponsorblock-help">Reads community timestamps and skips sponsors on YouTube and YouTube Music. No submissions, votes, accounts, or view reporting.</span>
+          </span>
+          <input id="sponsorBlockAutoSkip" type="checkbox" role="switch" aria-label="Auto-skip sponsored segments" aria-describedby="sponsorblock-help" />
+        </label>
+      </section>
+
       <section class="card" aria-labelledby="music-heading">
         <div class="card-head">
           <div class="service"><span class="service-icon music-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></svg></span><div><h2 id="music-heading">YouTube Music</h2><h3 class="subsection-title">Playback &amp; themes</h3></div></div>
@@ -66,7 +80,7 @@
         </label>
       </section>
     </main>
-    <footer><span>Made for your everyday soundtrack.</span><span class="credits">Lyrics by YouTube Music &amp; <a href="https://lrclib.net" target="_blank" rel="noreferrer">LRCLIB <span aria-hidden="true">↗</span></a></span></footer>
+    <footer><span>Made for your everyday soundtrack.</span><span class="credits">Lyrics by YouTube Music &amp; <a href="https://lrclib.net" target="_blank" rel="noreferrer">LRCLIB <span aria-hidden="true">↗</span></a> · Segments by <a href="https://sponsor.ajay.app" target="_blank" rel="noreferrer">SponsorBlock <span aria-hidden="true">↗</span></a></span></footer>
     <script type="module" src="popup.js"></script>
   </body>
 </html>
