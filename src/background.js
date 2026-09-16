@@ -1,13 +1,24 @@
 import { fetchLyrics } from "./lib/lrclib.js";
 
 const CACHE_PREFIX = "ctp-lyrics:";
-const SPONSOR_CACHE_PREFIX = "ctp-sponsorblock:";
+const SPONSOR_CACHE_PREFIX = "ctp-sponsorblock:v2:";
 const FOUND_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MISS_TTL_MS = 30 * 60 * 1000;
 const SPONSOR_FOUND_TTL_MS = 60 * 60 * 1000;
 const SPONSOR_MISS_TTL_MS = 10 * 60 * 1000;
 const SPONSORBLOCK_API = "https://sponsor.ajay.app/api/skipSegments";
-const SPONSOR_CATEGORIES = ["sponsor"];
+// These are SponsorBlock's timestamp categories.  Keep the API request and the
+// marker palette in the content script in sync when categories change.
+const SPONSOR_CATEGORIES = [
+  "sponsor",
+  "selfpromo",
+  "interaction",
+  "intro",
+  "outro",
+  "preview",
+  "music_offtopic",
+  "filler",
+];
 
 const THEME_TAB_URLS = [
   "*://www.youtube.com/*",
@@ -159,12 +170,13 @@ function normalizeSponsorSegments(input) {
   if (!Array.isArray(input)) return [];
   return input
     .filter((item) =>
-      item?.category === "sponsor" &&
+      SPONSOR_CATEGORIES.includes(item?.category) &&
       (!item.actionType || item.actionType === "skip") &&
       Array.isArray(item.segment)
     )
     .map((item) => ({
       id: String(item.UUID || `${item.segment[0]}-${item.segment[1]}`),
+      category: item.category,
       start: Number(item.segment[0]),
       end: Number(item.segment[1]),
     }))

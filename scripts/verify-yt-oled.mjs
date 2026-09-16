@@ -12,6 +12,7 @@ assert("defaults to oled-black", DEFAULT_SETTINGS.youtube.theme === "oled-black"
 assert("Shorts stay visible by default", DEFAULT_SETTINGS.youtube.hideShorts === false);
 assert("Playables stay visible by default", DEFAULT_SETTINGS.youtube.hidePlayables === false);
 assert("SponsorBlock is opt-in", DEFAULT_SETTINGS.sponsorBlock.autoSkip === false);
+assert("SponsorBlock segment colors show by default", DEFAULT_SETTINGS.sponsorBlock.showSegmentColors === true);
 assert(
   "old ytm-only storage still gets youtube theme",
   mergeSettings({ ytm: { followAlongLyrics: false } }).youtube.theme === "oled-black"
@@ -36,6 +37,10 @@ assert(
 assert(
   "preserves SponsorBlock auto-skip",
   mergeSettings({ sponsorBlock: { autoSkip: true } }).sponsorBlock.autoSkip === true
+);
+assert(
+  "preserves SponsorBlock marker preference",
+  mergeSettings({ sponsorBlock: { showSegmentColors: false } }).sponsorBlock.showSegmentColors === false
 );
 
 const failed = checks.filter((item) => !item.ok);

@@ -13,7 +13,8 @@ YouTube ships a **True OLED black** theme and optional, read-only **SponsorBlock
 - Forces YouTube's dark appearance while the theme is on
 - **Hide Shorts**: removes Shorts shelves, cards, and navigation links
 - **Hide Playables**: removes Playables shelves, cards, and navigation links
-- Optional **SponsorBlock auto-skip** reads community sponsor timestamps and seeks past them
+- Optional **SponsorBlock auto-skip** reads community timestamps and seeks past sponsors, intros, outros, and other skippable categories
+- Color-coded SponsorBlock timeline markers show each segment category and can be hidden independently
 - Toggle it from the toolbar popup
 
 ### YouTube Music
@@ -25,7 +26,7 @@ YouTube ships a **True OLED black** theme and optional, read-only **SponsorBlock
 - Turns the lyrics tab into a clean lyrics view, with timestamps when available
 - Highlights the current line as the song plays
 - Click a timed line to seek
-- Optional **SponsorBlock auto-skip** also works during music playback
+- Optional **SponsorBlock auto-skip** and colored segment markers also work during music playback
 - Falls back to unsynced LRCLIB text when timestamps are missing
 - Toggle it from the toolbar popup
 
@@ -49,7 +50,8 @@ Click the ChudTube+ icon:
 | YouTube → Themes → True OLED black | On | Pure `#000` chrome on youtube.com |
 | YouTube → Hide Shorts | Off | Remove Shorts from feeds and navigation |
 | YouTube → Hide Playables | Off | Remove Playables from feeds and navigation |
-| SponsorBlock → Auto-skip sponsored segments | Off | Read sponsor timestamps and skip them on YouTube and YouTube Music |
+| SponsorBlock → Auto-skip marked segments | Off | Read community timestamps and skip their marked ranges on YouTube and YouTube Music |
+| SponsorBlock → Show colored segment markers | On | Show each SponsorBlock category in its own color on the video timeline |
 | YouTube Music → Themes → True OLED black | On | Pure `#000` persistent player bar on music.youtube.com |
 | YouTube Music → Follow-along lyrics | On | Use YouTube Music lyrics plus timestamped LRCLIB lyrics in the lyrics tab |
 
