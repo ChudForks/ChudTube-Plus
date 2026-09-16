@@ -1,8 +1,13 @@
 import { fetchLyrics } from "./lib/lrclib.js";
 
 const CACHE_PREFIX = "ctp-lyrics:";
+const SPONSOR_CACHE_PREFIX = "ctp-sponsorblock:";
 const FOUND_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MISS_TTL_MS = 30 * 60 * 1000;
+const SPONSOR_FOUND_TTL_MS = 60 * 60 * 1000;
+const SPONSOR_MISS_TTL_MS = 10 * 60 * 1000;
+const SPONSORBLOCK_API = "https://sponsor.ajay.app/api/skipSegments";
+const SPONSOR_CATEGORIES = ["sponsor"];
 
 const THEME_TAB_URLS = [
   "*://www.youtube.com/*",
@@ -90,21 +95,104 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== "CTP_FETCH_LYRICS") return false;
-  handleFetch(message.track)
+  let request;
+  if (message?.type === "CTP_FETCH_LYRICS") request = handleFetch(message.track);
+  else if (message?.type === "CTP_FETCH_SPONSOR_SEGMENTS") {
+    request = handleSponsorSegments(message.videoId);
+  } else return false;
+
+  request
     .then(sendResponse)
     .catch((error) => {
-      sendResponse({
-        status: "error",
-        source: "lrclib",
-        synced: false,
-        lines: [],
-        plain: "",
-        error: error?.message || "Failed to fetch lyrics",
-      });
+      if (message.type === "CTP_FETCH_SPONSOR_SEGMENTS") {
+        sendResponse({ segments: [], error: error?.message || "Failed to fetch segments" });
+      } else {
+        sendResponse({
+          status: "error",
+          source: "lrclib",
+          synced: false,
+          lines: [],
+          plain: "",
+          error: error?.message || "Failed to fetch lyrics",
+        });
+      }
     });
   return true;
 });
+
+async function handleSponsorSegments(videoId) {
+  if (!/^[A-Za-z0-9_-]{6,20}$/.test(videoId || "")) {
+    throw new Error("Invalid YouTube video ID");
+  }
+
+  const key = `${SPONSOR_CACHE_PREFIX}${videoId}`;
+  const cached = await readSponsorCache(key);
+  if (cached) return { segments: cached, cached: true };
+
+  const bytes = new TextEncoder().encode(videoId);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const prefix = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 4);
+  const params = new URLSearchParams({
+    service: "YouTube",
+    categories: JSON.stringify(SPONSOR_CATEGORIES),
+    actionTypes: JSON.stringify(["skip"]),
+  });
+  const response = await fetch(`${SPONSORBLOCK_API}/${prefix}?${params}`);
+  if (response.status === 404) {
+    await writeSponsorCache(key, []);
+    return { segments: [] };
+  }
+  if (!response.ok) throw new Error(`SponsorBlock returned HTTP ${response.status}`);
+
+  const matches = await response.json();
+  const entry = Array.isArray(matches)
+    ? matches.find((candidate) => candidate?.videoID === videoId)
+    : null;
+  const segments = normalizeSponsorSegments(entry?.segments);
+  await writeSponsorCache(key, segments);
+  return { segments };
+}
+
+function normalizeSponsorSegments(input) {
+  if (!Array.isArray(input)) return [];
+  return input
+    .filter((item) =>
+      item?.category === "sponsor" &&
+      (!item.actionType || item.actionType === "skip") &&
+      Array.isArray(item.segment)
+    )
+    .map((item) => ({
+      id: String(item.UUID || `${item.segment[0]}-${item.segment[1]}`),
+      start: Number(item.segment[0]),
+      end: Number(item.segment[1]),
+    }))
+    .filter(({ start, end }) => Number.isFinite(start) && Number.isFinite(end) && start >= 0 && end > start)
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+}
+
+async function readSponsorCache(key) {
+  const stored = await chrome.storage.local.get(key);
+  const entry = stored[key];
+  if (!Array.isArray(entry?.segments) || !entry.fetchedAt) return null;
+  const ttl = entry.segments.length ? SPONSOR_FOUND_TTL_MS : SPONSOR_MISS_TTL_MS;
+  if (Date.now() - entry.fetchedAt > ttl) {
+    chrome.storage.local.remove(key);
+    return null;
+  }
+  return entry.segments;
+}
+
+async function writeSponsorCache(key, segments) {
+  try {
+    await chrome.storage.local.set({
+      [key]: { segments, fetchedAt: Date.now() },
+    });
+  } catch (error) {
+    console.warn("[ChudTube+] SponsorBlock cache write failed", error);
+  }
+}
 
 async function handleFetch(track) {
   const key = cacheKey(track);

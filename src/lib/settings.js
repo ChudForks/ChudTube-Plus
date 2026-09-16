@@ -2,6 +2,9 @@ export const YOUTUBE_THEMES = ["default", "oled-black"];
 export const YTM_THEMES = ["default", "oled-black"];
 
 export const DEFAULT_SETTINGS = {
+  sponsorBlock: {
+    autoSkip: false,
+  },
   ytm: {
     followAlongLyrics: true,
     theme: "oled-black",
@@ -17,6 +20,9 @@ export function mergeSettings(stored) {
   const incoming = stored && typeof stored === "object" ? stored : {};
   const theme = incoming.youtube?.theme;
   return {
+    sponsorBlock: {
+      autoSkip: incoming.sponsorBlock?.autoSkip ?? DEFAULT_SETTINGS.sponsorBlock.autoSkip,
+    },
     ytm: {
       followAlongLyrics:
         incoming.ytm?.followAlongLyrics ?? DEFAULT_SETTINGS.ytm.followAlongLyrics,

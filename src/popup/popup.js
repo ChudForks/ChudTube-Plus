@@ -5,6 +5,7 @@ const oledBlack = document.getElementById("oledBlack");
 const hideShorts = document.getElementById("hideShorts");
 const hidePlayables = document.getElementById("hidePlayables");
 const musicOledBlack = document.getElementById("musicOledBlack");
+const sponsorBlockAutoSkip = document.getElementById("sponsorBlockAutoSkip");
 
 const settings = await getSettings();
 followAlong.checked = Boolean(settings.ytm.followAlongLyrics);
@@ -12,6 +13,18 @@ oledBlack.checked = settings.youtube.theme === "oled-black";
 hideShorts.checked = Boolean(settings.youtube.hideShorts);
 hidePlayables.checked = Boolean(settings.youtube.hidePlayables);
 musicOledBlack.checked = settings.ytm.theme === "oled-black";
+sponsorBlockAutoSkip.checked = Boolean(settings.sponsorBlock.autoSkip);
+
+sponsorBlockAutoSkip.addEventListener("change", async () => {
+  const current = await getSettings();
+  await setSettings({
+    ...current,
+    sponsorBlock: {
+      ...current.sponsorBlock,
+      autoSkip: sponsorBlockAutoSkip.checked,
+    },
+  });
+});
 
 followAlong.addEventListener("change", async () => {
   const current = await getSettings();

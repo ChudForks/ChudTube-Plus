@@ -2,7 +2,7 @@
 
 Chromium extension that customizes YouTube and YouTube Music.
 
-YouTube ships a **True OLED black** theme. YouTube Music ships a matching OLED player bar and **Follow-along lyrics**, which uses official YouTube Music lyrics and timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
+YouTube ships a **True OLED black** theme and optional, read-only **SponsorBlock auto-skip**. YouTube Music ships the same auto-skip option, a matching OLED player bar, and **Follow-along lyrics**, which uses official YouTube Music lyrics and timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
 
 ## What it does
 
@@ -13,6 +13,7 @@ YouTube ships a **True OLED black** theme. YouTube Music ships a matching OLED p
 - Forces YouTube's dark appearance while the theme is on
 - **Hide Shorts**: removes Shorts shelves, cards, and navigation links
 - **Hide Playables**: removes Playables shelves, cards, and navigation links
+- Optional **SponsorBlock auto-skip** reads community sponsor timestamps and seeks past them
 - Toggle it from the toolbar popup
 
 ### YouTube Music
@@ -24,6 +25,7 @@ YouTube ships a **True OLED black** theme. YouTube Music ships a matching OLED p
 - Turns the lyrics tab into a clean lyrics view, with timestamps when available
 - Highlights the current line as the song plays
 - Click a timed line to seek
+- Optional **SponsorBlock auto-skip** also works during music playback
 - Falls back to unsynced LRCLIB text when timestamps are missing
 - Toggle it from the toolbar popup
 
@@ -47,6 +49,7 @@ Click the ChudTube+ icon:
 | YouTube → Themes → True OLED black | On | Pure `#000` chrome on youtube.com |
 | YouTube → Hide Shorts | Off | Remove Shorts from feeds and navigation |
 | YouTube → Hide Playables | Off | Remove Playables from feeds and navigation |
+| SponsorBlock → Auto-skip sponsored segments | Off | Read sponsor timestamps and skip them on YouTube and YouTube Music |
 | YouTube Music → Themes → True OLED black | On | Pure `#000` persistent player bar on music.youtube.com |
 | YouTube Music → Follow-along lyrics | On | Use YouTube Music lyrics plus timestamped LRCLIB lyrics in the lyrics tab |
 
@@ -57,8 +60,9 @@ Click the ChudTube+ icon:
 - `youtube.com` — apply themes
 - `music.youtube.com` — read the player and replace the lyrics tab
 - `lrclib.net` — fetch lyrics
+- `sponsor.ajay.app` — fetch SponsorBlock timestamps when auto-skip is enabled
 
-No account, no analytics, no extra trackers. LRCLIB is queried with a `Lrclib-Client` header so the client is identifiable, as their API asks.
+No account, no analytics, no extra trackers. The SponsorBlock integration is read-only: it uses the recommended hash-prefix lookup and never submits segments, votes, view events, or user data. LRCLIB is queried with a `Lrclib-Client` header so the client is identifiable, as their API asks.
 
 ## Project layout
 
@@ -70,6 +74,7 @@ src/lib/lrc.js             LRC parser
 src/lib/lrclib.js          LRCLIB client
 src/lib/ytm-track.js       now-playing metadata
 src/content/yt.js          YouTube themes
+src/content/sponsorblock.js read-only auto-skip controller
 src/content/yt.css
 src/content/ytm.js         YouTube Music injection
 src/lib/youtube-lyrics.js  YouTube Music lyric normalization
