@@ -1,4 +1,4 @@
-import { mergeSettings, DEFAULT_SETTINGS } from "../src/lib/settings.js";
+import { mergeSettings, DEFAULT_SETTINGS, DEFAULT_CUSTOM_THEME } from "../src/lib/settings.js";
 
 const checks = [];
 
@@ -11,7 +11,7 @@ function assert(name, condition) {
 assert("defaults to oled-black", DEFAULT_SETTINGS.youtube.theme === "oled-black");
 assert("Shorts stay visible by default", DEFAULT_SETTINGS.youtube.hideShorts === false);
 assert("Playables stay visible by default", DEFAULT_SETTINGS.youtube.hidePlayables === false);
-assert("SponsorBlock is opt-in", DEFAULT_SETTINGS.sponsorBlock.autoSkip === false);
+assert("SponsorBlock is opt-in", DEFAULT_SETTINGS.sponsorBlock.categories.sponsor === "off");
 assert("SponsorBlock segment colors show by default", DEFAULT_SETTINGS.sponsorBlock.showSegmentColors === true);
 assert(
   "old ytm-only storage still gets youtube theme",
@@ -30,13 +30,37 @@ assert(
   mergeSettings({ youtube: { theme: "neon" } }).youtube.theme === "oled-black"
 );
 assert(
+  "accepts custom theme",
+  mergeSettings({ youtube: { theme: "custom" } }).youtube.theme === "custom"
+);
+assert(
+  "fills custom theme defaults",
+  mergeSettings({ youtube: { theme: "custom" } }).youtube.customTheme.accent ===
+    DEFAULT_CUSTOM_THEME.accent
+);
+assert(
+  "preserves a custom color",
+  mergeSettings({ youtube: { customTheme: { background: "#112233" } } }).youtube.customTheme
+    .background === "#112233"
+);
+assert(
+  "rejects invalid custom colors",
+  mergeSettings({ youtube: { customTheme: { background: "red" } } }).youtube.customTheme
+    .background === DEFAULT_CUSTOM_THEME.background
+);
+assert(
   "preserves content filters",
   mergeSettings({ youtube: { hideShorts: true, hidePlayables: true } }).youtube.hideShorts &&
     mergeSettings({ youtube: { hideShorts: true, hidePlayables: true } }).youtube.hidePlayables
 );
 assert(
-  "preserves SponsorBlock auto-skip",
-  mergeSettings({ sponsorBlock: { autoSkip: true } }).sponsorBlock.autoSkip === true
+  "migrates SponsorBlock auto-skip to per-category auto",
+  mergeSettings({ sponsorBlock: { autoSkip: true } }).sponsorBlock.categories.sponsor === "auto" &&
+    mergeSettings({ sponsorBlock: { autoSkip: true } }).sponsorBlock.categories.intro === "auto"
+);
+assert(
+  "preserves SponsorBlock skip button mode",
+  mergeSettings({ sponsorBlock: { categories: { intro: "button" } } }).sponsorBlock.categories.intro === "button"
 );
 assert(
   "preserves SponsorBlock marker preference",

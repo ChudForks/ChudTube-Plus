@@ -6,6 +6,37 @@ ytmusic-tab-renderer.ctp-lyrics-visible > :not(#ctp-lyrics-root) {
   display: none !important;
 }
 
+/* Keep the persistent playback surface truly black without changing the rest
+   of YouTube Music's intentionally layered dark UI. Custom properties cross
+   the player bar's component boundary, covering both current and legacy DOM. */
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar {
+  --ytmusic-player-bar-background: #000 !important;
+  --ytmusic-player-bar-background-color: #000 !important;
+  --ytmusic-generic-background-a: #000 !important;
+  --ytmusic-color-black1: #000 !important;
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar #player-bar-background,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar .background,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar .background-overlay,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar #right-controls,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar .right-controls,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar #right-content,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar .right-content {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
+/* In expanded-player mode this is a sibling of ytmusic-player-bar, not a
+   descendant. It fills the scrollbar-width end cap seen at the right edge. */
+html[data-ctp-ytm-theme="oled-black"] ytmusic-app-layout[player-ui-state="PLAYER_PAGE_OPEN"] #player-bar-background,
+html[data-ctp-ytm-theme="oled-black"] #layout[player-ui-state="PLAYER_PAGE_OPEN"] #player-bar-background {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
 /* Lyrics stay in the player-page side panel. Do not raise z-index: YTM video
    fullscreen keeps the panel in the tree and a stacking context overlays the film. */
 #tab-renderer.ctp-lyrics-visible,

@@ -1,28 +1,27 @@
 import { getSettings, onSettingsChanged } from "../lib/settings.js";
+import {
+  OLED_PALETTE,
+  customThemeCssVars,
+  isDarkColor,
+  mergeCustomTheme,
+  youtubeSpecVars,
+} from "../lib/theme.js";
 import "./sponsorblock.js";
 
 const THEME_OLED = "oled-black";
+const THEME_CUSTOM = "custom";
 const ATTR = "data-ctp-theme";
 const STYLE_ID = "ctp-oled-style";
 const DARK_ATTRS = ["dark", "darker-dark-theme"];
 const OLED_RGB = new Set([15, 13, 18, 24, 33, 39]);
-const OLED_VARS = {
-  "--yt-spec-base-background": "#000",
-  "--yt-spec-raised-background": "#000",
-  "--yt-spec-menu-background": "#000",
-  "--yt-spec-brand-background-solid": "#000",
-  "--yt-spec-brand-background-primary": "#000",
-  "--yt-spec-general-background-a": "#000",
-  "--yt-spec-general-background-b": "#000",
-  "--yt-spec-general-background-c": "#000",
-  "--yt-sys-color-baseline--base-background": "#000",
-  "--yt-sys-color-baseline--raised-background": "#000",
-  "--yt-sys-color-baseline--menu-background": "#000",
-};
+const LIGHT_RGB = new Set([255, 249, 248, 243, 242, 241, 240, 232, 230, 229, 224]);
+const STAMP_STYLE_PROPS = ["background", "background-color", "color-scheme", "color"];
 
 const overridden = new Map();
 let currentTheme = THEME_OLED;
+let currentPalette = { ...OLED_PALETTE };
 const forcedDarkAttrs = new Set();
+const stampedVars = new Set();
 let remapTimer = 0;
 let featureFilterTimer = 0;
 let featureObserver = null;
@@ -31,9 +30,13 @@ let hidePlayables = false;
 let started = false;
 let sheetCss = "";
 
-if (!/(^|\.)music\.youtube\.com$/i.test(location.hostname) && !globalThis.__ctpOledInit) {
-  globalThis.__ctpOledInit = true;
-  init();
+if (!/(^|\.)music\.youtube\.com$/i.test(location.hostname)) {
+  if (globalThis.__ctpOledInit) {
+    getSettings().then((settings) => applyYoutubeSettings(settings.youtube));
+  } else {
+    globalThis.__ctpOledInit = true;
+    init();
+  }
 }
 
 async function init() {
@@ -44,15 +47,21 @@ async function init() {
   }
   const settings = await getSettings();
   applyYoutubeSettings(settings.youtube);
-  onSettingsChanged((next) => applyYoutubeSettings(next.youtube));
+  if (!globalThis.__ctpYoutubeSettingsListener) {
+    globalThis.__ctpYoutubeSettingsListener = true;
+    onSettingsChanged((next) => applyYoutubeSettings(next.youtube));
+  }
   if (!started) bindPage();
 }
 
+globalThis.__ctpApplyYoutubeSettings = applyYoutubeSettings;
+
 function applyYoutubeSettings(settings) {
-  applyTheme(settings.theme);
+  const youtube = settings && typeof settings === "object" ? settings : {};
+  applyTheme(youtube.theme ?? "oled-black", youtube.customTheme);
   const root = document.documentElement;
-  hideShorts = Boolean(settings.hideShorts);
-  hidePlayables = Boolean(settings.hidePlayables);
+  hideShorts = Boolean(youtube.hideShorts);
+  hidePlayables = Boolean(youtube.hidePlayables);
   root.toggleAttribute("data-ctp-hide-shorts", hideShorts);
   root.toggleAttribute("data-ctp-hide-playables", hidePlayables);
   syncFeatureObserver();
@@ -69,10 +78,10 @@ function bindPage() {
   window.addEventListener("yt-navigate-finish", scheduleFeatureFilter, true);
 
   const attrObs = new MutationObserver(() => {
-    if (currentTheme !== THEME_OLED) return;
+    if (!isThemed()) return;
     const root = document.documentElement;
-    if (root.getAttribute(ATTR) !== THEME_OLED) root.setAttribute(ATTR, THEME_OLED);
-    ensureDark();
+    if (root.getAttribute(ATTR) !== currentTheme) root.setAttribute(ATTR, currentTheme);
+    ensureAppearance();
     scheduleRemap();
   });
   attrObs.observe(document.documentElement, {
@@ -171,16 +180,15 @@ function featureForGuideEntry(entry) {
   return "";
 }
 
-function applyTheme(theme) {
-  currentTheme = theme === THEME_OLED ? THEME_OLED : "default";
+function applyTheme(theme, customTheme) {
+  const nextTheme = theme === THEME_CUSTOM || theme === THEME_OLED ? theme : "default";
+  const nextPalette = nextTheme === THEME_CUSTOM ? mergeCustomTheme(customTheme) : { ...OLED_PALETTE };
   const root = document.documentElement;
-  if (currentTheme === THEME_OLED) {
-    root.setAttribute(ATTR, THEME_OLED);
-    ensureDark();
-    mountSheet();
-    stamp(true);
-    remapTokens();
-  } else {
+  const themeChanged = currentTheme !== nextTheme;
+  currentTheme = nextTheme;
+  currentPalette = nextPalette;
+
+  if (nextTheme === "default") {
     root.removeAttribute(ATTR);
     unmountSheet();
     stamp(false);
@@ -188,7 +196,19 @@ function applyTheme(theme) {
     releaseBootTheme();
     for (const name of forcedDarkAttrs) root.removeAttribute(name);
     forcedDarkAttrs.clear();
+    return;
   }
+
+  root.setAttribute(ATTR, nextTheme);
+  ensureAppearance();
+  mountSheet();
+  stamp(true);
+  if (themeChanged) clearRemap();
+  remapTokens();
+}
+
+function isThemed() {
+  return currentTheme === THEME_OLED || currentTheme === THEME_CUSTOM;
 }
 
 function hosts() {
@@ -200,21 +220,41 @@ function hosts() {
 }
 
 function stamp(on) {
+  const vars = on ? stampVariables() : {};
+  const varNames = Object.keys(vars);
   for (const el of hosts()) {
     if (on) {
-      el.style.setProperty("background", "#000", "important");
-      el.style.setProperty("background-color", "#000", "important");
-      el.style.setProperty("color-scheme", "dark", "important");
-      for (const [name, value] of Object.entries(OLED_VARS)) {
+      el.style.setProperty("background", currentPalette.background, "important");
+      el.style.setProperty("background-color", currentPalette.background, "important");
+      el.style.setProperty(
+        "color-scheme",
+        isDarkColor(currentPalette.background) ? "dark" : "light",
+        "important"
+      );
+      if (currentTheme === THEME_CUSTOM) {
+        el.style.setProperty("color", currentPalette.text, "important");
+      } else {
+        el.style.removeProperty("color");
+      }
+      for (const name of stampedVars) {
+        if (!varNames.includes(name)) el.style.removeProperty(name);
+      }
+      for (const [name, value] of Object.entries(vars)) {
         el.style.setProperty(name, value, "important");
       }
     } else {
-      el.style.removeProperty("background");
-      el.style.removeProperty("background-color");
-      el.style.removeProperty("color-scheme");
-      for (const name of Object.keys(OLED_VARS)) el.style.removeProperty(name);
+      for (const name of STAMP_STYLE_PROPS) el.style.removeProperty(name);
+      for (const name of stampedVars) el.style.removeProperty(name);
     }
   }
+  stampedVars.clear();
+  if (on) for (const name of varNames) stampedVars.add(name);
+}
+
+function stampVariables() {
+  const spec = youtubeSpecVars(currentPalette, { textAndAccent: currentTheme === THEME_CUSTOM });
+  if (currentTheme !== THEME_CUSTOM) return spec;
+  return { ...spec, ...customThemeCssVars(currentPalette) };
 }
 
 function mountSheet() {
@@ -233,15 +273,22 @@ function unmountSheet() {
   document.getElementById(STYLE_ID)?.remove();
 }
 
-function ensureDark() {
-  if (currentTheme !== THEME_OLED) return;
+function ensureAppearance() {
+  if (!isThemed()) return;
   const root = document.documentElement;
-  DARK_ATTRS.forEach((name) => {
-    if (!root.hasAttribute(name)) {
-      root.setAttribute(name, "");
-      forcedDarkAttrs.add(name);
-    }
-  });
+  if (isDarkColor(currentPalette.background)) {
+    DARK_ATTRS.forEach((name) => {
+      if (!root.hasAttribute(name)) {
+        root.setAttribute(name, "");
+        forcedDarkAttrs.add(name);
+      }
+    });
+    return;
+  }
+  for (const name of DARK_ATTRS) {
+    root.removeAttribute(name);
+    forcedDarkAttrs.delete(name);
+  }
 }
 
 function releaseBootTheme() {
@@ -257,7 +304,7 @@ function releaseBootTheme() {
 }
 
 function scheduleRemap() {
-  if (currentTheme !== THEME_OLED || remapTimer) return;
+  if (!isThemed() || remapTimer) return;
   remapTimer = window.requestAnimationFrame(() => {
     remapTimer = 0;
     stamp(true);
@@ -266,7 +313,7 @@ function scheduleRemap() {
 }
 
 function remapTokens() {
-  if (currentTheme !== THEME_OLED) return;
+  if (!isThemed()) return;
   remapOn(document.documentElement);
   remapOn(document.body);
   remapDeep(document.querySelector("ytd-app"), 0);
@@ -292,11 +339,12 @@ function remapOn(el) {
     bucket = new Set();
     overridden.set(el, bucket);
   }
+  const fill = currentPalette.background;
   for (let i = 0; i < styles.length; i += 1) {
     const prop = styles[i];
     if (!prop.startsWith("--")) continue;
-    if (!isYoutubeDarkGray(styles.getPropertyValue(prop))) continue;
-    el.style.setProperty(prop, "#000", "important");
+    if (!shouldRemapToken(styles.getPropertyValue(prop))) continue;
+    el.style.setProperty(prop, fill, "important");
     bucket.add(prop);
   }
 }
@@ -309,9 +357,18 @@ function clearRemap() {
   overridden.clear();
 }
 
-function isYoutubeDarkGray(value) {
+function shouldRemapToken(value) {
+  const parsed = parseCssGray(value);
+  if (!parsed) return false;
+  if (currentTheme === THEME_CUSTOM && !isDarkColor(currentPalette.background)) {
+    return LIGHT_RGB.has(parsed);
+  }
+  return OLED_RGB.has(parsed);
+}
+
+function parseCssGray(value) {
   const v = String(value || "").trim().toLowerCase();
-  if (!v) return false;
+  if (!v) return null;
   const hex = v.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/);
   if (hex) {
     let h = hex[1];
@@ -319,14 +376,14 @@ function isYoutubeDarkGray(value) {
     const r = parseInt(h.slice(0, 2), 16);
     const g = parseInt(h.slice(2, 4), 16);
     const b = parseInt(h.slice(4, 6), 16);
-    return r === g && g === b && OLED_RGB.has(r);
+    return r === g && g === b ? r : null;
   }
   const rgb = v.match(/^rgba?\(\s*(\d+)\s*(?:,|\s)\s*(\d+)\s*(?:,|\s)\s*(\d+)/);
   if (rgb) {
     const r = Number(rgb[1]);
     const g = Number(rgb[2]);
     const b = Number(rgb[3]);
-    return r === g && g === b && OLED_RGB.has(r);
+    return r === g && g === b ? r : null;
   }
-  return false;
+  return null;
 }

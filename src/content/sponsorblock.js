@@ -1,21 +1,16 @@
-import { getSettings, onSettingsChanged } from "../lib/settings.js";
+import { getSettings, onSettingsChanged, SPONSOR_CATEGORIES, sponsorCategoryModes } from "../lib/settings.js";
 
 const MEDIA_SELECTOR = "video.html5-main-video, video.video-stream, video";
+const SKIP_HOST_SELECTOR = "#movie_player, ytmusic-player#player, ytmusic-player, .html5-video-player";
 const SKIP_EPSILON_SECONDS = 0.05;
 const MARKER_LAYER_CLASS = "ctp-sponsorblock-markers";
 const MARKER_CLASS = "ctp-sponsorblock-marker";
-const MARKER_COLORS = {
-  sponsor: "#00d400",
-  selfpromo: "#ffff00",
-  interaction: "#cc00ff",
-  intro: "#00ffff",
-  outro: "#0202ed",
-  preview: "#008fd6",
-  music_offtopic: "#ff9900",
-  filler: "#7300ff",
-};
+const SKIP_BUTTON_CLASS = "ctp-sponsorblock-skip";
+const SKIP_STYLE_ID = "ctp-sponsorblock-style";
+const MARKER_COLORS = Object.fromEntries(SPONSOR_CATEGORIES.map((category) => [category.id, category.color]));
+const SKIP_LABELS = Object.fromEntries(SPONSOR_CATEGORIES.map((category) => [category.id, category.skipLabel]));
 
-let autoSkipEnabled = false;
+let categoryModes = sponsorCategoryModes();
 let showSegmentColors = true;
 let videoId = "";
 let segments = [];
@@ -26,6 +21,10 @@ let lastSkip = { id: "", at: 0 };
 let markerLayer = null;
 let markerHost = null;
 let markerHostPosition = "";
+let skipButton = null;
+let skipHost = null;
+let skipHostPosition = "";
+let activeSkipSegment = null;
 
 if (!globalThis.__ctpSponsorBlockInit) {
   globalThis.__ctpSponsorBlockInit = true;
@@ -49,18 +48,20 @@ async function init() {
 }
 
 function applySettings(settings) {
-  autoSkipEnabled = Boolean(settings?.autoSkip);
+  categoryModes = sponsorCategoryModes(settings);
   showSegmentColors = settings?.showSegmentColors !== false;
   if (!isActive()) {
     requestNumber += 1;
     videoId = "";
     segments = [];
     removeMarkers();
+    removeSkipButton();
     return;
   }
   scheduleBind();
   scheduleRefresh();
   renderMarkers();
+  maybeSkip();
 }
 
 function onPlayerMessage(event) {
@@ -81,6 +82,7 @@ function bindMedia() {
   const media = document.querySelector(MEDIA_SELECTOR);
   if (media === boundMedia) {
     renderMarkers();
+    maybeSkip();
     return;
   }
   if (boundMedia) {
@@ -91,7 +93,10 @@ function bindMedia() {
     boundMedia.removeEventListener("durationchange", renderMarkers);
   }
   boundMedia = media;
-  if (!boundMedia) return;
+  if (!boundMedia) {
+    removeSkipButton();
+    return;
+  }
   boundMedia.addEventListener("timeupdate", maybeSkip);
   boundMedia.addEventListener("playing", maybeSkip);
   boundMedia.addEventListener("seeked", maybeSkip);
@@ -99,6 +104,7 @@ function bindMedia() {
   boundMedia.addEventListener("durationchange", renderMarkers);
   scheduleRefresh();
   renderMarkers();
+  maybeSkip();
 }
 
 function scheduleRefresh() {
@@ -114,6 +120,7 @@ async function refresh(nextId) {
   videoId = nextId;
   segments = [];
   renderMarkers();
+  hideSkipButton();
   const currentRequest = ++requestNumber;
   try {
     const response = await chrome.runtime.sendMessage({
@@ -132,20 +139,108 @@ async function refresh(nextId) {
 }
 
 function maybeSkip() {
-  if (!autoSkipEnabled || !boundMedia || !segments.length) return;
+  if (!boundMedia || !segments.length || isAdPlaying()) {
+    hideSkipButton();
+    return;
+  }
   const time = Number(boundMedia.currentTime);
-  if (!Number.isFinite(time)) return;
-  const match = segments.find(({ start, end }) => time >= start && time < end - SKIP_EPSILON_SECONDS);
-  if (!match) return;
+  if (!Number.isFinite(time)) {
+    hideSkipButton();
+    return;
+  }
 
+  const matches = segments.filter(({ start, end }) => time >= start && time < end - SKIP_EPSILON_SECONDS);
+  const autoMatch = matches.find((segment) => categoryModes[segment.category] === "auto");
+  if (autoMatch) {
+    hideSkipButton();
+    skipTo(autoMatch);
+    return;
+  }
+
+  const buttonMatch = matches.find((segment) => categoryModes[segment.category] === "button");
+  if (buttonMatch) showSkipButton(buttonMatch);
+  else hideSkipButton();
+}
+
+function skipTo(segment) {
+  if (!boundMedia || !segment) return;
   const now = performance.now();
-  if (lastSkip.id === match.id && now - lastSkip.at < 500) return;
-  lastSkip = { id: match.id, at: now };
-  boundMedia.currentTime = Math.min(match.end + SKIP_EPSILON_SECONDS, boundMedia.duration || match.end);
+  if (lastSkip.id === segment.id && now - lastSkip.at < 500) return;
+  lastSkip = { id: segment.id, at: now };
+  boundMedia.currentTime = Math.min(segment.end + SKIP_EPSILON_SECONDS, boundMedia.duration || segment.end);
+  hideSkipButton();
+}
+
+function showSkipButton(segment) {
+  const button = ensureSkipButton();
+  if (!button) return;
+  if (activeSkipSegment?.id === segment.id && !button.hidden) return;
+  activeSkipSegment = segment;
+  const label = SKIP_LABELS[segment.category] || "Skip segment";
+  button.hidden = false;
+  button.dataset.category = segment.category;
+  button.style.setProperty("--ctp-skip-color", MARKER_COLORS[segment.category] || "#fff");
+  button.setAttribute("aria-label", label);
+  button.querySelector(".ctp-sponsorblock-skip-label").textContent = label;
+}
+
+function hideSkipButton() {
+  activeSkipSegment = null;
+  if (skipButton) skipButton.hidden = true;
+}
+
+function ensureSkipButton() {
+  ensureSkipStyles();
+  const host = document.querySelector(SKIP_HOST_SELECTOR);
+  if (!host) {
+    removeSkipButton();
+    return null;
+  }
+  if (skipHost === host && skipButton?.isConnected) return skipButton;
+
+  removeSkipButton();
+  skipHost = host;
+  skipHostPosition = host.style.position;
+  if (getComputedStyle(host).position === "static") host.style.position = "relative";
+
+  skipButton = document.createElement("button");
+  skipButton.type = "button";
+  skipButton.className = SKIP_BUTTON_CLASS;
+  skipButton.hidden = true;
+
+  const label = document.createElement("span");
+  label.className = "ctp-sponsorblock-skip-label";
+
+  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  icon.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M5 5v14l11-7zm12 0h2v14h-2z");
+  icon.append(path);
+
+  skipButton.append(label, icon);
+  skipButton.addEventListener("pointerdown", stopPlayerEvent, true);
+  skipButton.addEventListener("click", onSkipButtonClick, true);
+  host.append(skipButton);
+  return skipButton;
+}
+
+function onSkipButtonClick(event) {
+  stopPlayerEvent(event);
+  if (activeSkipSegment) skipTo(activeSkipSegment);
+}
+
+function stopPlayerEvent(event) {
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function isAdPlaying() {
+  return Boolean(document.querySelector("#movie_player.ad-showing, .ad-showing"));
 }
 
 function isActive() {
-  return autoSkipEnabled || showSegmentColors;
+  return showSegmentColors || Object.values(categoryModes).some((mode) => mode !== "off");
 }
 
 function renderMarkers() {
@@ -218,6 +313,83 @@ function removeMarkers() {
   markerLayer = null;
   markerHost = null;
   markerHostPosition = "";
+}
+
+function removeSkipButton() {
+  skipButton?.remove();
+  if (skipHost) skipHost.style.position = skipHostPosition;
+  skipButton = null;
+  skipHost = null;
+  skipHostPosition = "";
+  activeSkipSegment = null;
+}
+
+function ensureSkipStyles() {
+  if (document.getElementById(SKIP_STYLE_ID)) return;
+  const style = document.createElement("style");
+  style.id = SKIP_STYLE_ID;
+  style.textContent = `
+    .${SKIP_BUTTON_CLASS} {
+      position: absolute;
+      right: 12px;
+      bottom: 24px;
+      z-index: 61;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      padding: 10px 14px 10px 16px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: rgba(15, 15, 15, 0.88);
+      box-shadow: inset 3px 0 0 var(--ctp-skip-color, #fff), 0 2px 10px rgba(0, 0, 0, 0.45);
+      color: #fff;
+      font: 500 14px/1.2 "YouTube Noto", Roboto, "Segoe UI", sans-serif;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      cursor: pointer;
+      pointer-events: auto;
+      appearance: none;
+      backdrop-filter: blur(8px);
+      touch-action: manipulation;
+    }
+    .${SKIP_BUTTON_CLASS}[hidden] { display: none !important; }
+    .${SKIP_BUTTON_CLASS}:hover {
+      background: rgba(36, 36, 36, 0.94);
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+    .${SKIP_BUTTON_CLASS}:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+    .${SKIP_BUTTON_CLASS} svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    #movie_player:not(.ytp-autohide):not(.ytp-autohide-active) .${SKIP_BUTTON_CLASS},
+    .html5-video-player:not(.ytp-autohide):not(.ytp-autohide-active) .${SKIP_BUTTON_CLASS} {
+      bottom: 72px;
+    }
+    #movie_player.ytp-fullscreen .${SKIP_BUTTON_CLASS},
+    .html5-video-player.ytp-fullscreen .${SKIP_BUTTON_CLASS} {
+      bottom: 36px;
+    }
+    #movie_player.ytp-fullscreen:not(.ytp-autohide):not(.ytp-autohide-active) .${SKIP_BUTTON_CLASS},
+    .html5-video-player.ytp-fullscreen:not(.ytp-autohide):not(.ytp-autohide-active) .${SKIP_BUTTON_CLASS} {
+      bottom: 120px;
+    }
+    ytmusic-player .${SKIP_BUTTON_CLASS} {
+      right: 16px;
+      bottom: 16px;
+      border-radius: 999px;
+      font-size: 13px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .${SKIP_BUTTON_CLASS} { transition: none; }
+    }
+  `;
+  document.documentElement.append(style);
 }
 
 function videoIdFromLocation() {
