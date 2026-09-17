@@ -66,7 +66,7 @@ export const SPONSOR_CATEGORIES = [
 ];
 
 const DEFAULT_CATEGORY_MODES = Object.fromEntries(
-  SPONSOR_CATEGORIES.map((category) => [category.id, "off"])
+  SPONSOR_CATEGORIES.map((category) => [category.id, "button"])
 );
 
 export const DEFAULT_SETTINGS = {
@@ -89,11 +89,13 @@ export const DEFAULT_SETTINGS = {
 export function sponsorCategoryModes(settings) {
   const source = settings && typeof settings === "object" ? settings : {};
   const stored = source.categories && typeof source.categories === "object" ? source.categories : {};
-  const fallback = source.autoSkip ? "auto" : "off";
+  const fallback = typeof source.autoSkip === "boolean"
+    ? source.autoSkip ? "auto" : "off"
+    : "button";
   const categories = {};
   for (const { id } of SPONSOR_CATEGORIES) {
     const value = stored[id] ?? fallback;
-    categories[id] = SPONSOR_SKIP_MODES.includes(value) ? value : "off";
+    categories[id] = SPONSOR_SKIP_MODES.includes(value) ? value : DEFAULT_CATEGORY_MODES[id];
   }
   return categories;
 }

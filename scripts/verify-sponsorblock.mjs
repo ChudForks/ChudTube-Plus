@@ -47,10 +47,11 @@ globalThis.fetch = async (url) => {
 const { mergeSettings, SPONSOR_CATEGORIES } = await import(`../src/lib/settings.js?verify=${Date.now()}`);
 assert.equal(mergeSettings({ sponsorBlock: { autoSkip: true } }).sponsorBlock.categories.sponsor, "auto");
 assert.equal(mergeSettings({ sponsorBlock: { autoSkip: true } }).sponsorBlock.categories.intro, "auto");
-assert.equal(mergeSettings({}).sponsorBlock.categories.sponsor, "off");
+assert.equal(mergeSettings({}).sponsorBlock.categories.sponsor, "button");
 assert.equal(mergeSettings({ sponsorBlock: { categories: { sponsor: "button" } } }).sponsorBlock.categories.sponsor, "button");
-assert.equal(mergeSettings({ sponsorBlock: { categories: { sponsor: "button" } } }).sponsorBlock.categories.intro, "off");
-assert.equal(mergeSettings({ sponsorBlock: { categories: { sponsor: "nope" } } }).sponsorBlock.categories.sponsor, "off");
+assert.equal(mergeSettings({ sponsorBlock: { categories: { sponsor: "button" } } }).sponsorBlock.categories.intro, "button");
+assert.equal(mergeSettings({ sponsorBlock: { categories: { sponsor: "nope" } } }).sponsorBlock.categories.sponsor, "button");
+assert.equal(mergeSettings({ sponsorBlock: { autoSkip: false } }).sponsorBlock.categories.sponsor, "off");
 
 await import(`../src/background.js?verify=${Date.now()}`);
 const response = await new Promise((resolve) => {
