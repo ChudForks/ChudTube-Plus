@@ -115,6 +115,30 @@ html[data-ctp-theme="custom"] [dark] {
   --yt-live-chat-secondary-text-color: var(--ctp-theme-muted) !important;
 }
 
+/* YouTube's brand mark and watch progress UI use literal red fills rather
+   than the public theme tokens above. Keep the wordmark and play glyph
+   legible, while letting a custom theme own the red logo container and every
+   active part of the playback timeline. */
+html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg > g:first-child > path:first-child {
+  fill: var(--ctp-theme-accent) !important;
+}
+
+html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg > g:first-child > path:nth-child(2),
+html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg #youtube-paths_yt115 path {
+  fill: var(--ctp-theme-text) !important;
+}
+
+html[data-ctp-theme="custom"] .ytp-play-progress.ytp-swatch-background-color {
+  background-image: linear-gradient(
+    var(--ctp-theme-accent),
+    var(--ctp-theme-accent)
+  ) !important;
+}
+
+html[data-ctp-theme="custom"] .ytp-scrubber-button.ytp-swatch-background-color {
+  background-color: var(--ctp-theme-accent) !important;
+}
+
 html[data-ctp-theme],
 html[data-ctp-theme] body,
 html[data-ctp-theme] ytd-app,
