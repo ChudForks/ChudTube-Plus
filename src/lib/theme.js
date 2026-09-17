@@ -79,17 +79,8 @@ export const CUSTOM_THEME_PRESETS = [
     },
   },
   {
-    id: "cream",
-    label: "Cream",
-    colors: {
-      background: "#f4efe6",
-      surface: "#fffaf3",
-      text: "#1c1917",
-      muted: "#78716c",
-      accent: "#c2410c",
-      hover: "#e7e0d4",
-      outline: "#d6d3d1",
-    },
+    id: "custom",
+    label: "Custom",
   },
 ];
 

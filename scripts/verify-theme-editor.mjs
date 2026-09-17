@@ -42,6 +42,8 @@ try {
   await page.waitForSelector("#color-background");
   assert.equal(await page.$eval("#color-background", (input) => input.value), DEFAULT_CUSTOM_THEME.background);
   assert.equal(await page.$eval("#preview", (el) => el.dataset.view), "home");
+  assert.equal(await page.$eval('[data-preset="custom"]', (button) => button.classList.contains("is-active")), true);
+  assert.equal(await page.$('[data-preset="cream"]'), null);
 
   await page.$eval("#color-background", (input) => {
     input.value = "#112233";
@@ -51,7 +53,11 @@ try {
     const preview = document.getElementById("preview");
     return getComputedStyle(preview).getPropertyValue("--ctp-theme-bg").trim() === "#112233";
   });
+  assert.equal(await page.evaluate(() => window.saved.youtube.customTheme.background), DEFAULT_CUSTOM_THEME.background);
+  assert.equal(await page.$eval("#saveCustom", (button) => button.disabled), false);
+  await page.click("#saveCustom");
   await page.waitForFunction(() => window.saved.youtube.customTheme.background === "#112233");
+  assert.equal(await page.$eval('[data-preset="custom"]', (button) => button.classList.contains("is-active")), true);
   assert.equal(await page.$eval("#useOnYoutube", (input) => input.checked), false);
 
   await page.click('input[name="previewView"][value="watch"]');
@@ -65,20 +71,29 @@ try {
   await page.click("#useOnYoutube");
   await page.waitForFunction(() => window.saved.youtube.theme === "custom");
 
-  await page.click('[data-preset="cream"]');
-  await page.waitForFunction(() => window.saved.youtube.customTheme.background === "#f4efe6");
-  const creamPreview = await page.$eval("#preview", (el) => ({
+  await page.click('[data-preset="slate"]');
+  const slatePreview = await page.$eval("#preview", (el) => ({
     bg: getComputedStyle(el).getPropertyValue("--ctp-theme-bg").trim(),
     text: getComputedStyle(el).getPropertyValue("--ctp-theme-text").trim(),
     accent: getComputedStyle(el).getPropertyValue("--ctp-theme-accent").trim(),
   }));
-  assert.equal(creamPreview.bg, "#f4efe6");
-  assert.equal(creamPreview.text, "#1c1917");
-  assert.equal(creamPreview.accent, "#c2410c");
+  assert.equal(slatePreview.bg, "#0f172a");
+  assert.equal(slatePreview.text, "#f8fafc");
+  assert.equal(slatePreview.accent, "#38bdf8");
+  assert.equal(await page.evaluate(() => window.saved.youtube.customTheme.background), "#112233");
+
+  await page.$eval("#color-accent", (input) => {
+    input.value = "#abcdef";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await page.click("#saveCustom");
+  await page.waitForFunction(() => window.saved.youtube.customTheme.accent === "#abcdef");
+  assert.equal(await page.evaluate(() => window.saved.youtube.customTheme.background), "#0f172a");
+  assert.equal(await page.$eval('[data-preset="custom"]', (button) => button.classList.contains("is-active")), true);
   await page.screenshot({ path: shot });
 
   await page.$eval("#color-text", (input) => {
-    input.value = "#f4efe6";
+    input.value = "#0f172a";
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
   await page.waitForFunction(() => {
@@ -87,11 +102,9 @@ try {
   });
 
   await page.click("#resetColors");
-  await page.waitForFunction(
-    (background) => window.saved.youtube.customTheme.background === background,
-    {},
-    DEFAULT_CUSTOM_THEME.background
-  );
+  assert.equal(await page.evaluate(() => window.saved.youtube.customTheme.background), "#0f172a");
+  await page.click("#saveCustom");
+  await page.waitForFunction((background) => window.saved.youtube.customTheme.background === background, {}, DEFAULT_CUSTOM_THEME.background);
   assert.deepEqual(errors, []);
 } finally {
   await browser.close();
