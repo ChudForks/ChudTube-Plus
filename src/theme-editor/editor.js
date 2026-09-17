@@ -14,33 +14,48 @@ const colorFields = document.getElementById("colorFields");
 const presetsEl = document.getElementById("presets");
 const useOnYoutube = document.getElementById("useOnYoutube");
 const resetColors = document.getElementById("resetColors");
+const saveCustom = document.getElementById("saveCustom");
 const contrastHint = document.getElementById("contrastHint");
 const saveStatus = document.getElementById("saveStatus");
 
 const fields = new Map();
 let palette = mergeCustomTheme();
+let savedPalette = mergeCustomTheme();
+let selectedPreset = "custom";
 let enabled = false;
-let saveTimer = 0;
 let statusTimer = 0;
 let pendingWrite = 0;
 
 renderFieldControls();
-renderPresets();
 
 const settings = await getSettings();
-palette = mergeCustomTheme(settings.youtube.customTheme);
+savedPalette = mergeCustomTheme(settings.youtube.customTheme);
+palette = { ...savedPalette };
 enabled = settings.youtube.theme === "custom";
+renderPresets();
 syncControls();
 paintPreview();
 
 useOnYoutube.addEventListener("change", async () => {
   enabled = useOnYoutube.checked;
-  await persist({ theme: enabled ? "custom" : "default", customTheme: palette });
+  await persist({ theme: enabled ? "custom" : "default" });
   setStatus(enabled ? "On for YouTube" : "Saved, not applied on YouTube");
 });
 
 resetColors.addEventListener("click", () => {
-  applyPalette({ ...DEFAULT_CUSTOM_THEME }, { persistNow: true });
+  selectedPreset = "chudtube";
+  applyPalette({ ...DEFAULT_CUSTOM_THEME });
+});
+
+saveCustom.addEventListener("click", async () => {
+  const nextSavedPalette = { ...palette };
+  saveCustom.disabled = true;
+  await persist({ customTheme: nextSavedPalette });
+  savedPalette = nextSavedPalette;
+  selectedPreset = "custom";
+  renderPresets();
+  syncControls();
+  setStatus("Saved in Custom");
 });
 
 for (const input of document.querySelectorAll('input[name="previewView"]')) {
@@ -52,8 +67,10 @@ for (const input of document.querySelectorAll('input[name="previewView"]')) {
 onSettingsChanged((next) => {
   enabled = next.youtube.theme === "custom";
   useOnYoutube.checked = enabled;
-  if (saveTimer || pendingWrite) return;
-  palette = mergeCustomTheme(next.youtube.customTheme);
+  if (pendingWrite) return;
+  savedPalette = mergeCustomTheme(next.youtube.customTheme);
+  if (selectedPreset === "custom") palette = { ...savedPalette };
+  renderPresets();
   syncControls();
   paintPreview();
 });
@@ -114,32 +131,29 @@ function renderPresets() {
       const bar = document.createElement("span");
       bar.className = "preset-bar";
       bar.setAttribute("aria-hidden", "true");
+      const colors = presetPalette(preset);
       for (const key of ["background", "surface", "accent", "text"]) {
         const swatch = document.createElement("i");
-        swatch.style.background = preset.colors[key];
+        swatch.style.background = colors[key];
         bar.append(swatch);
       }
       const label = document.createElement("span");
       label.textContent = preset.label;
       button.append(bar, label);
       button.addEventListener("click", () => {
-        applyPalette({ ...preset.colors }, { persistNow: true });
+        selectedPreset = preset.id;
+        applyPalette({ ...presetPalette(preset) });
       });
       return button;
     })
   );
 }
 
-function applyPalette(next, { persistNow = false } = {}) {
+function applyPalette(next) {
   palette = mergeCustomTheme(next);
   syncControls();
   paintPreview();
-  if (persistNow) {
-    persist({ customTheme: palette });
-    setStatus("Saved");
-    return;
-  }
-  scheduleSave();
+  setStatus(samePalette(palette, savedPalette) ? "Saved in Custom" : "Unsaved changes");
 }
 
 function syncControls() {
@@ -151,9 +165,11 @@ function syncControls() {
     if (document.activeElement !== controls.hex) controls.hex.value = palette[field.id];
   }
   for (const button of presetsEl.querySelectorAll(".preset")) {
-    const preset = CUSTOM_THEME_PRESETS.find((item) => item.id === button.dataset.preset);
-    button.classList.toggle("is-active", Boolean(preset && samePalette(preset.colors, palette)));
+    button.classList.toggle("is-active", button.dataset.preset === selectedPreset);
   }
+  const hasUnsavedChanges = !samePalette(palette, savedPalette);
+  saveCustom.disabled = !hasUnsavedChanges;
+  saveStatus.parentElement.classList.toggle("is-dirty", hasUnsavedChanges);
   const ratio = contrastRatio(palette.text, palette.background);
   if (ratio < 4.5) {
     contrastHint.hidden = false;
@@ -166,14 +182,6 @@ function syncControls() {
 
 function paintPreview() {
   applyCustomThemeVars(preview, palette);
-}
-
-function scheduleSave() {
-  window.clearTimeout(saveTimer);
-  saveTimer = window.setTimeout(() => {
-    persist({ customTheme: palette });
-    setStatus("Saved");
-  }, 120);
 }
 
 async function persist(partialYoutube) {
@@ -196,8 +204,12 @@ function setStatus(text) {
   saveStatus.textContent = text;
   window.clearTimeout(statusTimer);
   statusTimer = window.setTimeout(() => {
-    saveStatus.textContent = "Auto-saved";
+    saveStatus.textContent = samePalette(palette, savedPalette) ? "Saved in Custom" : "Unsaved changes";
   }, 1200);
+}
+
+function presetPalette(preset) {
+  return preset.id === "custom" ? savedPalette : preset.colors;
 }
 
 function samePalette(left, right) {
