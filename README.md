@@ -2,16 +2,15 @@
 
 Chromium extension that customizes YouTube and YouTube Music.
 
-YouTube ships a **True OLED black** theme and optional, read-only **SponsorBlock** skip controls. YouTube Music ships the same skip options, a matching OLED player bar, and **Follow-along lyrics**, which uses official YouTube Music lyrics and timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
+YouTube ships customizable themes (including an OLED preset) and optional, read-only **SponsorBlock** skip controls. YouTube Music ships the same skip options, an OLED player bar, and **Follow-along lyrics**, which uses official YouTube Music lyrics and timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
 
 ## What it does
 
 ### YouTube
 
-- Themes → **True OLED black**: true `#000` page chrome instead of YouTube's gray dark mode
-- Themes → **Custom theme**: pick page, card, text, and accent colors in a separate editor window with a live preview
+- Themes → **Custom theme**: choose OLED or another preset, or pick page, card, text, and accent colors in a separate editor window with a live preview
 - OLED pixels can turn off on the large surfaces (home, watch, sidebar, masthead)
-- Forces YouTube's dark appearance while OLED is on, or matches a custom theme's brightness
+- Matches YouTube's appearance to the selected theme's brightness
 - **Hide Shorts**: removes Shorts shelves, cards, and navigation links
 - **Hide Playables**: removes Playables shelves, cards, and navigation links
 - Optional **SponsorBlock** skip controls read community timestamps for sponsors, intros, outros, and other categories
@@ -49,8 +48,7 @@ Click the ChudTube+ icon:
 
 | Setting | Default | Effect |
 | --- | --- | --- |
-| YouTube → Themes → True OLED black | On | Pure `#000` chrome on youtube.com |
-| YouTube → Themes → Custom theme | Off | Apply your saved colors on youtube.com. OLED and custom cannot be on at the same time |
+| YouTube → Themes → Custom theme | On (OLED preset) | Apply your selected preset or saved colors on youtube.com |
 | YouTube → Themes → Edit colors | — | Opens a color picker window with a live Home/Watch preview |
 | YouTube → Hide Shorts | Off | Remove Shorts from feeds and navigation |
 | YouTube → Hide Playables | Off | Remove Playables from feeds and navigation |

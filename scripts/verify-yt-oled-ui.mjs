@@ -31,7 +31,7 @@ const browser = await puppeteer.launch({
 try {
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
-  await page.goto(fixture, { waitUntil: "domcontentloaded", timeout: 30000 });
+  await page.goto(fixture, { waitUntil: "load", timeout: 30000 });
   const fixtureColors = await page.evaluate(() => {
     const html = getComputedStyle(document.documentElement);
     const app = getComputedStyle(document.querySelector("ytd-app"));
@@ -63,14 +63,16 @@ try {
   await page.goto(popup, { waitUntil: "domcontentloaded", timeout: 15000 });
   const popupCopy = await page.evaluate(() => ({
     themes: Boolean(document.querySelector(".subsection-title")?.textContent.includes("Themes")),
-    oled: Boolean(document.body.innerText.includes("True OLED black")),
+    separateYoutubeOled: Boolean(document.querySelector("#oledBlack")),
+    musicOled: Boolean(document.querySelector("#musicOledBlack")),
     custom: Boolean(document.body.innerText.includes("Custom theme")),
     editColors: Boolean(document.body.innerText.includes("Edit colors")),
     youtubeLive: Boolean(document.querySelector("h2")?.textContent === "YouTube"),
   }));
   await page.screenshot({ path: shotPopup, fullPage: true });
   assert("popup has Themes heading", popupCopy.themes);
-  assert("popup has True OLED black", popupCopy.oled);
+  assert("popup removes the separate YouTube OLED switch", !popupCopy.separateYoutubeOled);
+  assert("popup keeps the YouTube Music OLED switch", popupCopy.musicOled);
   assert("popup has Custom theme", popupCopy.custom);
   assert("popup has Edit colors", popupCopy.editColors);
   assert("popup YouTube card is first/live", popupCopy.youtubeLive);
@@ -112,7 +114,7 @@ try {
     });
     await page.screenshot({ path: shotYoutube });
     console.log("youtube probe", youtubeProbe);
-    assert("youtube theme attr applied", youtubeProbe.theme === "oled-black");
+    assert("youtube custom theme attr applied", youtubeProbe.theme === "custom");
     assert("youtube html background is black", isBlack(youtubeProbe.htmlBg));
     assert("youtube base token is black", /#000|rgb\(0,\s*0,\s*0\)|var\(--ctp-oled\)|var\(--ctp-theme-bg/.test(youtubeProbe.token));
   } finally {
