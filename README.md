@@ -1,89 +1,108 @@
 # ChudTube+
 
-Chromium extension that customizes YouTube and YouTube Music.
+<p align="center">
+  <img src="icons/icon128.png" width="96" alt="ChudTube+ icon">
+</p>
 
-YouTube ships customizable themes (including an OLED preset) and optional, read-only **SponsorBlock** skip controls. YouTube Music ships the same skip options, an OLED player bar, and **Follow-along lyrics**, which uses official YouTube Music lyrics and timestamped, karaoke-style lines fetched from [LRCLIB](https://lrclib.net).
+<p align="center">
+  A Chromium extension for making YouTube and YouTube Music feel more yours: OLED themes, content filters, follow-along lyrics, and optional SponsorBlock controls.
+</p>
 
-## What it does
+<p align="center">
+  <a href="https://github.com/ChudForks/ChudTube-Plus/releases/latest/download/ChudTube-Plus.zip"><strong>Download ChudTube+</strong></a>
+  &nbsp;·&nbsp;
+  <a href="#install">Install</a>
+  &nbsp;·&nbsp;
+  <a href="#features">Features</a>
+</p>
+
+> **Experimental software.** Install only if you are comfortable enabling Developer mode in a Chromium browser. ChudTube+ is not distributed through the Chrome Web Store.
+
+## Install
+
+1. [Download the latest ZIP](https://github.com/ChudForks/ChudTube-Plus/releases/latest/download/ChudTube-Plus.zip) and unzip it somewhere permanent. Do not delete the extracted folder after installing.
+2. Open your browser's extensions page:
+   - Chrome / Brave / Opera: `chrome://extensions`
+   - Edge: `edge://extensions`
+3. Enable **Developer mode**.
+4. Click **Load unpacked**, then select the extracted `ChudTube-Plus` folder.
+5. Pin ChudTube+ from the browser toolbar, then visit [YouTube](https://www.youtube.com) or [YouTube Music](https://music.youtube.com).
+
+GitHub downloads cannot be installed in Chromium with one click; Chromium reserves that privilege for its extension store or managed-browser policies. The steps above are the supported direct-from-GitHub route and take about a minute. To update, download and extract the newest ZIP over a new folder, then choose **Reload** on the extension card.
+
+## Features
 
 ### YouTube
 
-- Themes → **Custom theme**: choose OLED or another preset, or pick page, card, text, and accent colors in a separate editor window with a live preview
-- OLED pixels can turn off on the large surfaces (home, watch, sidebar, masthead)
-- Matches YouTube's appearance to the selected theme's brightness
-- **Hide Shorts**: removes Shorts shelves, cards, and navigation links
-- **Hide Playables**: removes Playables shelves, cards, and navigation links
-- Optional **SponsorBlock** skip controls read community timestamps for sponsors, intros, outros, and other categories
-- Each category can auto-skip, show a Skip button on the player, or stay off
-- Color-coded SponsorBlock timeline markers show each segment category and can be hidden independently
-- Toggle it from the toolbar popup
+- Custom themes with OLED and other presets, plus a color editor with live preview
+- True-black large surfaces for OLED displays
+- Automatic light/dark appearance matching
+- Hide Shorts, Playables, and their navigation links
+- Optional, read-only SponsorBlock controls for sponsors, intros, outros, and other categories
+- Per-category options: auto-skip, show a Skip button, or leave it off
+- Optional color-coded SponsorBlock timeline markers
 
 ### YouTube Music
 
-- Themes → **True OLED black**: true `#000` persistent player bar instead of its gray surface
-- Watches the current YouTube Music track
-- Looks up synced lyrics on LRCLIB (`/api/get`, then `/api/search`)
-- Uses the lyrics supplied by YouTube Music when LRCLIB has no synced match
-- Turns the lyrics tab into a clean lyrics view, with timestamps when available
-- Highlights the current line as the song plays
-- Click a timed line to seek
-- Optional **SponsorBlock** skip controls and colored segment markers also work during music playback
-- Falls back to unsynced LRCLIB text when timestamps are missing
-- Toggle it from the toolbar popup
-
-## Load unpacked
-
-1. Open Chrome, Edge, Brave, or another Chromium browser
-2. Go to `chrome://extensions` (or `edge://extensions`)
-3. Turn on **Developer mode**
-4. Click **Load unpacked**
-5. Select this folder (`ChudTube+`)
-6. Open [YouTube](https://www.youtube.com) for the OLED theme, or [YouTube Music](https://music.youtube.com), play a song, and open the **Lyrics** tab
-
-The lyrics tab is re-enabled when YouTube Music disables it because it has no official lyrics.
+- True OLED-black persistent player bar
+- Follow-along lyrics from official YouTube Music lyrics and LRCLIB
+- Timestamped karaoke-style line highlighting when timing is available
+- Click a timed lyric line to seek
+- Unsynced lyric fallback when timestamps are unavailable
+- The same optional SponsorBlock controls and timeline markers
 
 ## Settings
 
-Click the ChudTube+ icon:
+Click the ChudTube+ toolbar icon to change settings.
 
 | Setting | Default | Effect |
 | --- | --- | --- |
-| YouTube → Themes → Custom theme | On (OLED preset) | Apply your selected preset or saved colors on youtube.com |
-| YouTube → Themes → Edit colors | — | Opens a color picker window with a live Home/Watch preview |
-| YouTube → Hide Shorts | Off | Remove Shorts from feeds and navigation |
-| YouTube → Hide Playables | Off | Remove Playables from feeds and navigation |
-| SponsorBlock → Skip categories | Button | Per category: Auto skips immediately, Button shows a Skip control on the player, Off leaves the segment alone |
-| SponsorBlock → Show colored segment markers | On | Show each SponsorBlock category in its own color on the video timeline |
-| YouTube Music → Themes → True OLED black | On | Pure `#000` persistent player bar on music.youtube.com |
-| YouTube Music → Follow-along lyrics | On | Use YouTube Music lyrics plus timestamped LRCLIB lyrics in the lyrics tab |
+| YouTube → Themes → Custom theme | On (OLED) | Applies your saved YouTube theme |
+| YouTube → Themes → Edit colors | — | Opens the live color editor |
+| YouTube → Hide Shorts | Off | Removes Shorts from feeds and navigation |
+| YouTube → Hide Playables | Off | Removes Playables from feeds and navigation |
+| SponsorBlock → Skip categories | Button | Configure every category as Auto, Button, or Off |
+| SponsorBlock → Show colored segment markers | On | Shows category-colored video timeline markers |
+| YouTube Music → Themes → True OLED black | On | Uses a pure-black persistent player bar |
+| YouTube Music → Follow-along lyrics | On | Replaces the lyrics tab with synced lyrics when available |
 
-## Permissions
+## Privacy and permissions
 
-- `storage` — save the settings and cache lyrics locally
-- `scripting` — apply the OLED theme to already-open YouTube tabs
-- `youtube.com` — apply themes
-- `music.youtube.com` — read the player and replace the lyrics tab
-- `lrclib.net` — fetch lyrics
-- `sponsor.ajay.app` — fetch SponsorBlock timestamps when skip features or markers are enabled
+ChudTube+ has no account, analytics, or extra trackers.
 
-No account, no analytics, no extra trackers. The SponsorBlock integration is read-only: it uses the recommended hash-prefix lookup and never submits segments, votes, view events, or user data. LRCLIB is queried with a `Lrclib-Client` header so the client is identifiable, as their API asks.
+- `storage` saves settings and cached lyrics locally.
+- `scripting` applies your theme to already-open YouTube tabs.
+- YouTube and YouTube Music permissions apply the extension where it is needed.
+- [LRCLIB](https://lrclib.net) is queried for lyrics when required.
+- [SponsorBlock](https://sponsor.ajay.app) is queried only for the optional skip features and markers.
+
+The SponsorBlock integration is read-only: it uses the recommended hash-prefix lookup and never submits segments, votes, view events, or user data. LRCLIB requests identify the client with its requested `Lrclib-Client` header.
+
+## For contributors
+
+This is a Manifest V3 extension. Clone the repository, then use **Load unpacked** to select the repository folder while developing. The release ZIP can be built locally with:
+
+```powershell
+./scripts/package-extension.ps1
+```
+
+The command creates `ChudTube-Plus.zip`, containing only the installable extension files. Publishing a GitHub release automatically builds and attaches the same ZIP.
 
 ## Project layout
 
 ```
-manifest.json
-src/background.js          service worker, LRCLIB fetch + cache
-src/lib/settings.js        synced settings
-src/lib/theme.js           custom YouTube theme colors
-src/theme-editor/          color picker and live preview window
-src/lib/lrc.js             LRC parser
-src/lib/lrclib.js          LRCLIB client
-src/lib/ytm-track.js       now-playing metadata
-src/content/yt.js          YouTube themes
-src/content/sponsorblock.js read-only skip controller
-src/content/yt.css
-src/content/ytm.js         YouTube Music injection
-src/lib/youtube-lyrics.js  YouTube Music lyric normalization
-src/content/ytm.css
-src/popup/                 toolbar popup
+manifest.json                extension manifest
+src/background.js            service worker; LRCLIB fetch and cache
+src/lib/settings.js          synced settings
+src/lib/theme.js             custom YouTube theme colors
+src/theme-editor/            color picker and live preview window
+src/content/yt.js            YouTube theme/content injection
+src/content/sponsorblock.js  read-only skip controller
+src/content/ytm.js           YouTube Music injection
+src/lib/youtube-lyrics.js    YouTube Music lyric normalization
+src/popup/                   toolbar popup
 ```
+
+## License
+
+No license has been selected yet. All rights are reserved until one is added.
