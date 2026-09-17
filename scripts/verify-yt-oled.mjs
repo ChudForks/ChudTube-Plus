@@ -13,7 +13,7 @@ assert("defaults to unified custom theme", DEFAULT_SETTINGS.youtube.theme === "c
 assert("defaults to the OLED preset", DEFAULT_SETTINGS.youtube.customTheme.background === OLED_PALETTE.background);
 assert("Shorts stay visible by default", DEFAULT_SETTINGS.youtube.hideShorts === false);
 assert("Playables stay visible by default", DEFAULT_SETTINGS.youtube.hidePlayables === false);
-assert("SponsorBlock is opt-in", DEFAULT_SETTINGS.sponsorBlock.categories.sponsor === "off");
+assert("SponsorBlock defaults to skip buttons", DEFAULT_SETTINGS.sponsorBlock.categories.sponsor === "button");
 assert("SponsorBlock segment colors show by default", DEFAULT_SETTINGS.sponsorBlock.showSegmentColors === true);
 assert(
   "old ytm-only storage still gets youtube theme",

@@ -52,7 +52,7 @@ Click the ChudTube+ icon:
 | YouTube → Themes → Edit colors | — | Opens a color picker window with a live Home/Watch preview |
 | YouTube → Hide Shorts | Off | Remove Shorts from feeds and navigation |
 | YouTube → Hide Playables | Off | Remove Playables from feeds and navigation |
-| SponsorBlock → Skip categories | Off | Per category: Auto skips immediately, Button shows a Skip control on the player, Off leaves the segment alone |
+| SponsorBlock → Skip categories | Button | Per category: Auto skips immediately, Button shows a Skip control on the player, Off leaves the segment alone |
 | SponsorBlock → Show colored segment markers | On | Show each SponsorBlock category in its own color on the video timeline |
 | YouTube Music → Themes → True OLED black | On | Pure `#000` persistent player bar on music.youtube.com |
 | YouTube Music → Follow-along lyrics | On | Use YouTube Music lyrics plus timestamped LRCLIB lyrics in the lyrics tab |

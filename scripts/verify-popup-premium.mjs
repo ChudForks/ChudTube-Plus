@@ -32,7 +32,7 @@ try {
   await page.waitForSelector('input[name="sponsorBlock-sponsor"][value="off"]');
   assert.equal(await page.$('#oledBlack'),null);
   assert.equal(await page.$eval('#followAlongLyrics',e=>e.checked),true);
-  assert.equal(await page.$eval('input[name="sponsorBlock-sponsor"][value="off"]',e=>e.checked),true);
+  assert.equal(await page.$eval('input[name="sponsorBlock-sponsor"][value="button"]',e=>e.checked),true);
   await page.click('#customTheme');
   await page.waitForFunction(()=>window.saved.youtube.theme==='default');
   assert.equal(await page.$eval('#followAlongLyrics',e=>e.checked),true);

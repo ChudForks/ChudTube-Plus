@@ -11,12 +11,12 @@
       <img class="logo" src="../../icons/icon128.png" width="48" height="48" alt="" />
       <div>
         <h1>ChudTube<span>+</span></h1>
-        <p>A better way to watch &amp; listen.</p>
+        <p>Controls for YouTube and YouTube Music</p>
       </div>
     </header>
 
     <main>
-      <div class="section-heading"><span>Your experience</span><span class="autosave">Auto-saved</span></div>
+      <div class="section-heading"><span>Settings</span><span class="autosave">Saved automatically</span></div>
       <section class="card" aria-labelledby="youtube-heading">
         <div class="card-head">
           <div class="service"><span class="service-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="5"/><path d="m10 9 5 3-5 3Z"/></svg></span><div><h2 id="youtube-heading">YouTube</h2><h3 class="subsection-title">Themes &amp; focus</h3></div></div>
@@ -26,7 +26,7 @@
           <label class="setting">
             <span class="copy">
               <span class="setting-title">Custom theme <span id="customSwatches" class="theme-swatches" aria-hidden="true"></span></span>
-              <span class="setting-help" id="custom-theme-help">Your colors on youtube.com. Edit colors to choose OLED or another preset, or build your own.</span>
+              <span class="setting-help" id="custom-theme-help">Apply a custom color palette to youtube.com.</span>
             </span>
             <input id="customTheme" type="checkbox" role="switch" aria-label="Custom theme" aria-describedby="custom-theme-help" />
           </label>
@@ -50,18 +50,18 @@
 
       <section class="card" aria-labelledby="sponsorblock-heading">
         <div class="card-head">
-          <div class="service"><span class="service-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h10l3 3v10l-3 3H7l-3-3V7Z"/><path d="m9 8 7 4-7 4Z"/></svg></span><div><h2 id="sponsorblock-heading">SponsorBlock</h2><h3 class="subsection-title">Read-only integration</h3></div></div>
+          <div class="service"><span class="service-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h10l3 3v10l-3 3H7l-3-3V7Z"/><path d="m9 8 7 4-7 4Z"/></svg></span><div><h2 id="sponsorblock-heading">SponsorBlock</h2><h3 class="subsection-title">Segment controls</h3></div></div>
           <span class="pill" aria-hidden="true"></span>
         </div>
         <div class="sb-skip-block">
           <span class="setting-title" id="sponsorblock-categories-title">Skip categories</span>
-          <span class="setting-help" id="sponsorblock-help">Community timestamps on YouTube and YouTube Music. Auto skips right away, Button shows a Skip control on the player, and Off leaves the segment alone. No submissions, votes, accounts, or view reporting.</span>
+          <span class="setting-help" id="sponsorblock-help">Choose whether each community-marked segment is skipped automatically, shown with a button, or left alone.</span>
           <div id="sponsorBlockCategories" class="sb-categories" role="group" aria-labelledby="sponsorblock-categories-title" aria-describedby="sponsorblock-help"></div>
         </div>
         <label class="setting">
           <span class="copy">
             <span class="setting-title">Show colored segment markers</span>
-            <span class="setting-help" id="sponsorblock-markers-help">Shows SponsorBlock segments on the video timeline. Each category has its own color.</span>
+            <span class="setting-help" id="sponsorblock-markers-help">Display category colors on the video timeline.</span>
           </span>
           <input id="sponsorBlockShowSegmentColors" type="checkbox" role="switch" aria-label="Show SponsorBlock colored segment markers" aria-describedby="sponsorblock-markers-help" />
         </label>
@@ -82,13 +82,13 @@
         <label class="setting">
           <span class="copy">
             <span class="setting-title">Follow-along lyrics</span>
-            <span class="setting-help" id="lyrics-help">Stay in the moment, line by line.<br>Official lyrics with timed lyrics from LRCLIB when available. Click a timed line to seek.</span>
+            <span class="setting-help" id="lyrics-help">Show official lyrics and LRCLIB timing when available. Select a timed line to seek.</span>
           </span>
           <input id="followAlongLyrics" type="checkbox" role="switch" aria-label="Follow-along lyrics" aria-describedby="lyrics-help" />
         </label>
       </section>
     </main>
-    <footer><span>Made for your everyday soundtrack.</span><span class="credits">Lyrics by YouTube Music &amp; <a href="https://lrclib.net" target="_blank" rel="noreferrer">LRCLIB <span aria-hidden="true">↗</span></a> · Segments by <a href="https://sponsor.ajay.app" target="_blank" rel="noreferrer">SponsorBlock <span aria-hidden="true">↗</span></a></span></footer>
+    <footer><span class="credits">Lyrics: YouTube Music &amp; <a href="https://lrclib.net" target="_blank" rel="noreferrer">LRCLIB <span aria-hidden="true">↗</span></a><span class="footer-separator" aria-hidden="true"></span>Segments: <a href="https://sponsor.ajay.app" target="_blank" rel="noreferrer">SponsorBlock <span aria-hidden="true">↗</span></a></span></footer>
     <script type="module" src="popup.js"></script>
   </body>
 </html>
