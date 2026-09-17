@@ -1,0 +1,22 @@
+name: Package release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build extension ZIP
+        shell: pwsh
+        run: ./scripts/package-extension.ps1 -OutputPath ./ChudTube-Plus.zip
+      - name: Attach extension ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: gh release upload ${{ github.event.release.tag_name }} ./ChudTube-Plus.zip --clobber
