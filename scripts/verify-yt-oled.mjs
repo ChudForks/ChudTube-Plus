@@ -1,4 +1,5 @@
-import { mergeSettings, DEFAULT_SETTINGS, DEFAULT_CUSTOM_THEME } from "../src/lib/settings.js";
+import { mergeSettings, DEFAULT_SETTINGS } from "../src/lib/settings.js";
+import { DEFAULT_CUSTOM_THEME, OLED_PALETTE } from "../src/lib/theme.js";
 
 const checks = [];
 
@@ -8,14 +9,15 @@ function assert(name, condition) {
   else console.log("ok  ", name);
 }
 
-assert("defaults to oled-black", DEFAULT_SETTINGS.youtube.theme === "oled-black");
+assert("defaults to unified custom theme", DEFAULT_SETTINGS.youtube.theme === "custom");
+assert("defaults to the OLED preset", DEFAULT_SETTINGS.youtube.customTheme.background === OLED_PALETTE.background);
 assert("Shorts stay visible by default", DEFAULT_SETTINGS.youtube.hideShorts === false);
 assert("Playables stay visible by default", DEFAULT_SETTINGS.youtube.hidePlayables === false);
 assert("SponsorBlock is opt-in", DEFAULT_SETTINGS.sponsorBlock.categories.sponsor === "off");
 assert("SponsorBlock segment colors show by default", DEFAULT_SETTINGS.sponsorBlock.showSegmentColors === true);
 assert(
   "old ytm-only storage still gets youtube theme",
-  mergeSettings({ ytm: { followAlongLyrics: false } }).youtube.theme === "oled-black"
+  mergeSettings({ ytm: { followAlongLyrics: false } }).youtube.theme === "custom"
 );
 assert(
   "preserves follow-along when merging youtube",
@@ -27,16 +29,25 @@ assert(
 );
 assert(
   "rejects unknown theme",
-  mergeSettings({ youtube: { theme: "neon" } }).youtube.theme === "oled-black"
+  mergeSettings({ youtube: { theme: "neon" } }).youtube.theme === "custom"
 );
 assert(
   "accepts custom theme",
   mergeSettings({ youtube: { theme: "custom" } }).youtube.theme === "custom"
 );
 assert(
-  "fills custom theme defaults",
+  "fills new installs with the OLED preset",
   mergeSettings({ youtube: { theme: "custom" } }).youtube.customTheme.accent ===
-    DEFAULT_CUSTOM_THEME.accent
+    OLED_PALETTE.accent
+);
+assert(
+  "migrates the old OLED mode into the custom theme",
+  mergeSettings({ youtube: { theme: "oled-black", customTheme: DEFAULT_CUSTOM_THEME } }).youtube.theme === "custom" &&
+    mergeSettings({ youtube: { theme: "oled-black", customTheme: DEFAULT_CUSTOM_THEME } }).youtube.customTheme.background === OLED_PALETTE.background
+);
+assert(
+  "preserves personalized colors while removing the old OLED mode",
+  mergeSettings({ youtube: { theme: "oled-black", customTheme: { ...DEFAULT_CUSTOM_THEME, background: "#112233" } } }).youtube.customTheme.background === "#112233"
 );
 assert(
   "preserves a custom color",

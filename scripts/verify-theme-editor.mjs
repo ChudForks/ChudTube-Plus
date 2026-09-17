@@ -24,7 +24,7 @@ try {
     window.saved = {
       sponsorBlock: { showSegmentColors: true },
       ytm: { followAlongLyrics: true, theme: "oled-black" },
-      youtube: { theme: "oled-black", hideShorts: false, hidePlayables: false, customTheme: defaults },
+      youtube: { theme: "default", hideShorts: false, hidePlayables: false, customTheme: defaults },
     };
     window.chrome = {
       storage: {

@@ -1,4 +1,10 @@
-import { getSettings, setSettings, SPONSOR_CATEGORIES, SPONSOR_SKIP_MODES } from "../lib/settings.js";
+import {
+  getSettings,
+  onSettingsChanged,
+  setSettings,
+  SPONSOR_CATEGORIES,
+  SPONSOR_SKIP_MODES,
+} from "../lib/settings.js";
 
 const MODE_LABELS = {
   auto: "Auto",
@@ -12,7 +18,6 @@ const MODE_TITLES = {
 };
 
 const followAlong = document.getElementById("followAlongLyrics");
-const oledBlack = document.getElementById("oledBlack");
 const customTheme = document.getElementById("customTheme");
 const editCustomTheme = document.getElementById("editCustomTheme");
 const customSwatches = document.getElementById("customSwatches");
@@ -23,15 +28,8 @@ const sponsorBlockShowSegmentColors = document.getElementById("sponsorBlockShowS
 const sponsorBlockCategories = document.getElementById("sponsorBlockCategories");
 
 const settings = await getSettings();
-followAlong.checked = Boolean(settings.ytm.followAlongLyrics);
-oledBlack.checked = settings.youtube.theme === "oled-black";
-customTheme.checked = settings.youtube.theme === "custom";
-hideShorts.checked = Boolean(settings.youtube.hideShorts);
-hidePlayables.checked = Boolean(settings.youtube.hidePlayables);
-musicOledBlack.checked = settings.ytm.theme === "oled-black";
-sponsorBlockShowSegmentColors.checked = Boolean(settings.sponsorBlock.showSegmentColors);
-renderSponsorCategories(settings.sponsorBlock.categories);
-renderCustomSwatches(settings.youtube.customTheme);
+renderSettings(settings);
+onSettingsChanged(renderSettings);
 
 sponsorBlockCategories.addEventListener("change", async (event) => {
   const input = event.target;
@@ -74,13 +72,7 @@ followAlong.addEventListener("change", async () => {
   });
 });
 
-oledBlack.addEventListener("change", async () => {
-  if (oledBlack.checked) customTheme.checked = false;
-  await saveYoutubeTheme();
-});
-
 customTheme.addEventListener("change", async () => {
-  if (customTheme.checked) oledBlack.checked = false;
   await saveYoutubeTheme();
 });
 
@@ -123,14 +115,24 @@ musicOledBlack.addEventListener("change", async () => {
 
 async function saveYoutubeTheme() {
   const current = await getSettings();
-  const theme = customTheme.checked ? "custom" : oledBlack.checked ? "oled-black" : "default";
   await setSettings({
     ...current,
     youtube: {
       ...current.youtube,
-      theme,
+      theme: customTheme.checked ? "custom" : "default",
     },
   });
+}
+
+function renderSettings(next) {
+  followAlong.checked = Boolean(next.ytm.followAlongLyrics);
+  customTheme.checked = next.youtube.theme === "custom";
+  hideShorts.checked = Boolean(next.youtube.hideShorts);
+  hidePlayables.checked = Boolean(next.youtube.hidePlayables);
+  musicOledBlack.checked = next.ytm.theme === "oled-black";
+  sponsorBlockShowSegmentColors.checked = Boolean(next.sponsorBlock.showSegmentColors);
+  renderSponsorCategories(next.sponsorBlock.categories);
+  renderCustomSwatches(next.youtube.customTheme);
 }
 
 function renderCustomSwatches(palette) {

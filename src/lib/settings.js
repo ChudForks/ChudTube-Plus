@@ -1,8 +1,8 @@
-import { DEFAULT_CUSTOM_THEME, mergeCustomTheme } from "./theme.js";
+import { DEFAULT_CUSTOM_THEME, OLED_PALETTE, mergeCustomTheme } from "./theme.js";
 
 export { DEFAULT_CUSTOM_THEME, mergeCustomTheme } from "./theme.js";
 
-export const YOUTUBE_THEMES = ["default", "oled-black", "custom"];
+export const YOUTUBE_THEMES = ["default", "custom"];
 export const YTM_THEMES = ["default", "oled-black"];
 export const SPONSOR_SKIP_MODES = ["auto", "button", "off"];
 
@@ -79,10 +79,10 @@ export const DEFAULT_SETTINGS = {
     theme: "oled-black",
   },
   youtube: {
-    theme: "oled-black",
+    theme: "custom",
     hideShorts: false,
     hidePlayables: false,
-    customTheme: { ...DEFAULT_CUSTOM_THEME },
+    customTheme: { ...OLED_PALETTE },
   },
 };
 
@@ -101,6 +101,12 @@ export function sponsorCategoryModes(settings) {
 export function mergeSettings(stored) {
   const incoming = stored && typeof stored === "object" ? stored : {};
   const theme = incoming.youtube?.theme;
+  const migratedOledTheme = theme === "oled-black";
+  const incomingCustomTheme = incoming.youtube?.customTheme;
+  const savedCustomTheme = incomingCustomTheme ? mergeCustomTheme(incomingCustomTheme) : null;
+  const hasPersonalizedTheme = savedCustomTheme && Object.keys(DEFAULT_CUSTOM_THEME).some(
+    (key) => savedCustomTheme[key] !== DEFAULT_CUSTOM_THEME[key]
+  );
   return {
     sponsorBlock: {
       showSegmentColors:
@@ -115,10 +121,18 @@ export function mergeSettings(stored) {
         : DEFAULT_SETTINGS.ytm.theme,
     },
     youtube: {
-      theme: YOUTUBE_THEMES.includes(theme) ? theme : DEFAULT_SETTINGS.youtube.theme,
+      theme: migratedOledTheme
+        ? "custom"
+        : YOUTUBE_THEMES.includes(theme)
+          ? theme
+          : DEFAULT_SETTINGS.youtube.theme,
       hideShorts: incoming.youtube?.hideShorts ?? DEFAULT_SETTINGS.youtube.hideShorts,
       hidePlayables: incoming.youtube?.hidePlayables ?? DEFAULT_SETTINGS.youtube.hidePlayables,
-      customTheme: mergeCustomTheme(incoming.youtube?.customTheme),
+      customTheme: migratedOledTheme && !hasPersonalizedTheme
+        ? { ...OLED_PALETTE }
+        : savedCustomTheme
+          ? savedCustomTheme
+          : { ...DEFAULT_SETTINGS.youtube.customTheme },
     },
   };
 }
