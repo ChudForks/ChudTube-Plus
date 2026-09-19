@@ -7,6 +7,18 @@ const MARKER_LAYER_CLASS = "ctp-sponsorblock-markers";
 const MARKER_CLASS = "ctp-sponsorblock-marker";
 const SKIP_BUTTON_CLASS = "ctp-sponsorblock-skip";
 const SKIP_STYLE_ID = "ctp-sponsorblock-style";
+const PROGRESS_HOST_SELECTORS = [
+  "#movie_player .ytp-progress-bar",
+  "#movie_player .ytp-progress-bar-container",
+  "ytmusic-player-bar #progress-bar-container",
+  "ytmusic-player-bar .ytp-progress-bar",
+  "ytmusic-player-bar .ytp-progress-bar-container",
+  "ytmusic-player-page .ytp-progress-bar",
+  "ytmusic-player-page .ytp-progress-bar-container",
+  ".html5-video-player .ytp-progress-bar",
+  ".html5-video-player .ytp-progress-bar-container",
+  ".YtPlayerProgressBarProgressBar",
+];
 const MARKER_COLORS = Object.fromEntries(SPONSOR_CATEGORIES.map((category) => [category.id, category.color]));
 const SKIP_LABELS = Object.fromEntries(SPONSOR_CATEGORIES.map((category) => [category.id, category.skipLabel]));
 
@@ -257,6 +269,7 @@ function renderMarkers() {
   const host = findProgressHost();
   if (!host) return;
 
+  ensureSkipStyles();
   if (markerHost !== host) {
     removeMarkers();
     markerHost = host;
@@ -265,13 +278,9 @@ function renderMarkers() {
     markerLayer = document.createElement("div");
     markerLayer.className = MARKER_LAYER_CLASS;
     markerLayer.setAttribute("aria-hidden", "true");
-    Object.assign(markerLayer.style, {
-      position: "absolute",
-      inset: "0",
-      overflow: "hidden",
-      pointerEvents: "none",
-      zIndex: "2",
-    });
+  }
+
+  if (markerLayer.parentNode !== host || host.lastElementChild !== markerLayer) {
     host.append(markerLayer);
   }
 
@@ -279,9 +288,19 @@ function renderMarkers() {
 }
 
 function findProgressHost() {
-  return document.querySelector(
-    "#movie_player .ytp-progress-bar-container, ytmusic-player-page .ytp-progress-bar-container, ytmusic-player-bar .ytp-progress-bar-container, ytmusic-player-bar #progress-bar"
-  );
+  for (const selector of PROGRESS_HOST_SELECTORS) {
+    for (const host of document.querySelectorAll(selector)) {
+      if (isVisibleProgressHost(host)) return host;
+    }
+  }
+  return document.querySelector(PROGRESS_HOST_SELECTORS.join(", "));
+}
+
+function isVisibleProgressHost(host) {
+  if (!host?.isConnected) return false;
+  const style = getComputedStyle(host);
+  if (style.display === "none" || style.visibility === "hidden") return false;
+  return host.getBoundingClientRect().width >= 8;
 }
 
 function createMarker(segment, duration) {
@@ -294,16 +313,10 @@ function createMarker(segment, duration) {
   marker.className = MARKER_CLASS;
   marker.dataset.category = segment.category;
   marker.title = `SponsorBlock: ${segment.category.replace("_", " ")}`;
-  Object.assign(marker.style, {
-    position: "absolute",
-    top: "0",
-    bottom: "0",
-    left: `${(start / duration) * 100}%`,
-    width: `${Math.max(((end - start) / duration) * 100, 0.25)}%`,
-    backgroundColor: color,
-    opacity: "0.9",
-    boxShadow: `0 0 2px ${color}`,
-  });
+  marker.style.setProperty("--ctp-sb-color", color);
+  marker.style.backgroundColor = color;
+  marker.style.left = `${(start / duration) * 100}%`;
+  marker.style.width = `${Math.max(((end - start) / duration) * 100, 0.25)}%`;
   return marker;
 }
 
@@ -329,11 +342,33 @@ function ensureSkipStyles() {
   const style = document.createElement("style");
   style.id = SKIP_STYLE_ID;
   style.textContent = `
+    .${MARKER_LAYER_CLASS} {
+      position: absolute !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      overflow: visible !important;
+      pointer-events: none !important;
+      z-index: 42 !important;
+      isolation: isolate;
+    }
+    .${MARKER_CLASS} {
+      position: absolute !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      height: 100% !important;
+      min-width: 2px;
+      pointer-events: none !important;
+      background-color: var(--ctp-sb-color) !important;
+      background-image: none !important;
+      opacity: 0.9 !important;
+      box-shadow: 0 0 2px var(--ctp-sb-color);
+    }
     .${SKIP_BUTTON_CLASS} {
       position: absolute;
       right: 12px;
       bottom: 24px;
-      z-index: 61;
+      z-index: 80 !important;
       display: inline-flex;
       align-items: center;
       gap: 8px;

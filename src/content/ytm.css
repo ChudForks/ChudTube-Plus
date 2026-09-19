@@ -26,6 +26,15 @@ html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar .right-content {
   background-color: #000 !important;
 }
 
+html[data-ctp-ytm-theme] .ctp-sponsorblock-markers {
+  z-index: 42 !important;
+}
+
+html[data-ctp-ytm-theme] .ctp-sponsorblock-marker {
+  background-color: var(--ctp-sb-color) !important;
+  background-image: none !important;
+}
+
 /* In expanded-player mode this is a sibling of ytmusic-player-bar, not a
    descendant. It fills the scrollbar-width end cap seen at the right edge. */
 html[data-ctp-ytm-theme="oled-black"] ytmusic-app-layout[player-ui-state="PLAYER_PAGE_OPEN"] #player-bar-background,

@@ -140,6 +140,34 @@ try {
     await page.$$eval(".ctp-sponsorblock-marker", (markers) => markers.map((marker) => [marker.dataset.category, marker.style.backgroundColor])),
     [["intro", "rgb(0, 255, 255)"], ["sponsor", "rgb(0, 212, 0)"]]
   );
+  const stacking = await page.evaluate(() => {
+    const host = document.querySelector(".ytp-progress-bar-container");
+    const play = document.createElement("div");
+    play.className = "ytp-play-progress ytp-swatch-background-color";
+    Object.assign(play.style, {
+      position: "absolute",
+      inset: "0",
+      zIndex: "31",
+      backgroundImage: "linear-gradient(#f00, #f00)",
+    });
+    host.insertBefore(play, host.firstChild);
+    const media = document.querySelector("video");
+    media.dispatchEvent(new Event("durationchange"));
+    const layer = document.querySelector(".ctp-sponsorblock-markers");
+    const layerStyle = getComputedStyle(layer);
+    const playStyle = getComputedStyle(play);
+    const marker = layer.querySelector(".ctp-sponsorblock-marker");
+    return {
+      lastChild: host.lastElementChild === layer,
+      layerZ: Number(layerStyle.zIndex),
+      playZ: Number(playStyle.zIndex),
+      markerColor: marker.style.backgroundColor,
+    };
+  });
+  assert.equal(stacking.lastChild, true);
+  assert.ok(stacking.layerZ >= 42, `expected marker layer z-index >= 42, got ${stacking.layerZ}`);
+  assert.ok(stacking.layerZ > stacking.playZ, `expected markers above play progress (${stacking.layerZ} > ${stacking.playZ})`);
+  assert.equal(stacking.markerColor, "rgb(0, 255, 255)");
   await page.waitForFunction(() => {
     const media = document.querySelector("video");
     media.currentTime = 12;

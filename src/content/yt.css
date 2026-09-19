@@ -139,6 +139,16 @@ html[data-ctp-theme="custom"] .ytp-scrubber-button.ytp-swatch-background-color {
   background-color: var(--ctp-theme-accent) !important;
 }
 
+/* SponsorBlock markers sit above the themed play-progress fill. */
+html[data-ctp-theme] .ctp-sponsorblock-markers {
+  z-index: 42 !important;
+}
+
+html[data-ctp-theme] .ctp-sponsorblock-marker {
+  background-color: var(--ctp-sb-color) !important;
+  background-image: none !important;
+}
+
 html[data-ctp-theme],
 html[data-ctp-theme] body,
 html[data-ctp-theme] ytd-app,
