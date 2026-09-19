@@ -80,6 +80,8 @@ try {
   assert.equal(slatePreview.bg, "#0f172a");
   assert.equal(slatePreview.text, "#f8fafc");
   assert.equal(slatePreview.accent, "#38bdf8");
+  const thumbBar = await page.$eval(".yt-thumb-progress", (el) => getComputedStyle(el).backgroundColor);
+  assert.equal(thumbBar, "rgb(56, 189, 248)");
   assert.equal(await page.evaluate(() => window.saved.youtube.customTheme.background), "#112233");
 
   await page.$eval("#color-accent", (input) => {

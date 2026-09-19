@@ -195,11 +195,22 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
 .yt-card h3, .yt-watch-title, .yt-related strong { font-size: 13px; font-weight: 650; }
 .yt-card p, .yt-related p, .yt-channel-row p { color: var(--preview-muted); font-size: 11px; }
 .yt-thumb, .yt-mini-thumb {
+  position: relative;
+  overflow: hidden;
   border-radius: 10px;
   background: linear-gradient(135deg, var(--preview-hover), var(--preview-surface));
 }
 .yt-thumb { height: 86px; margin-bottom: 8px; }
 .yt-thumb.alt, .yt-mini-thumb.alt { filter: brightness(1.15); }
+.yt-thumb-progress {
+  position: absolute;
+  right: 38%;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: var(--preview-accent);
+}
+.yt-thumb-progress.is-long { right: 18%; }
 .yt-watch { padding: 12px 16px 16px; }
 .yt-player {
   position: relative;

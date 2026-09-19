@@ -22,7 +22,7 @@ export const CUSTOM_THEME_FIELDS = [
   {
     id: "accent",
     label: "Accent",
-    help: "Subscribe, links, and the progress bar",
+    help: "Subscribe, links, and progress bars",
   },
   {
     id: "hover",

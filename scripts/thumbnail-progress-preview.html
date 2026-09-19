@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" dark data-ctp-theme="custom">
+  <head>
+    <meta charset="utf-8" />
+    <title>ChudTube+ thumbnail progress preview</title>
+    <link rel="stylesheet" href="../src/content/yt.css" />
+    <style>
+      html {
+        --ctp-theme-accent: #38bdf8;
+        --ctp-custom-accent: #38bdf8;
+        background: #0f172a;
+        color: #f8fafc;
+        font: 13px/1.4 "Segoe UI", sans-serif;
+      }
+      body { margin: 0; padding: 24px; background: #0f172a; }
+      .grid { display: grid; grid-template-columns: repeat(3, 220px); gap: 16px; }
+      .thumb {
+        position: relative;
+        height: 124px;
+        overflow: hidden;
+        border-radius: 12px;
+        background: #1e293b;
+      }
+      .label { margin-top: 8px; color: #94a3b8; }
+      #progress, .ytThumbnailOverlayProgressBarHostWatchedProgressBarSegment,
+      .YtThumbnailOverlayProgressBarHostWatchedProgressBarSegmentModern,
+      .ytwThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 4px;
+        background: #f00;
+      }
+      ytd-thumbnail-overlay-resume-playback-renderer,
+      yt-thumbnail-overlay-progress-bar-view-model,
+      ytw-thumbnail-overlay-resume-playback-renderer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grid">
+      <article>
+        <div class="thumb">
+          <ytd-thumbnail-overlay-resume-playback-renderer>
+            <div id="progress" class="ytd-thumbnail-overlay-resume-playback-renderer" style="width: 72%"></div>
+          </ytd-thumbnail-overlay-resume-playback-renderer>
+        </div>
+        <p class="label">polymer overlay</p>
+      </article>
+      <article>
+        <div class="thumb">
+          <yt-thumbnail-overlay-progress-bar-view-model>
+            <div class="ytThumbnailOverlayProgressBarHostWatchedProgressBarSegment" style="width: 44%"></div>
+          </yt-thumbnail-overlay-progress-bar-view-model>
+        </div>
+        <p class="label">view-model overlay</p>
+      </article>
+      <article>
+        <div class="thumb">
+          <ytw-thumbnail-overlay-resume-playback-renderer>
+            <div class="ytwThumbnailOverlayResumePlaybackRendererThumbnailOverlayResumePlaybackProgress" style="width: 61%"></div>
+          </ytw-thumbnail-overlay-resume-playback-renderer>
+        </div>
+        <p class="label">watch overlay</p>
+      </article>
+    </div>
+  </body>
+</html>

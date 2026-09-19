@@ -117,8 +117,8 @@ html[data-ctp-theme="custom"] [dark] {
 
 /* YouTube's brand mark and watch progress UI use literal red fills rather
    than the public theme tokens above. Keep the wordmark and play glyph
-   legible, while letting a custom theme own the red logo container and every
-   active part of the playback timeline. */
+   legible, while letting a custom theme own the red logo container, the
+   playback timeline, and the resume bars on video thumbnails. */
 html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg > g:first-child > path:first-child {
   fill: var(--ctp-theme-accent) !important;
 }
@@ -137,6 +137,26 @@ html[data-ctp-theme="custom"] .ytp-play-progress.ytp-swatch-background-color {
 
 html[data-ctp-theme="custom"] .ytp-scrubber-button.ytp-swatch-background-color {
   background-color: var(--ctp-theme-accent) !important;
+}
+
+/* Thumbnail resume bars are a separate overlay from the player swatch.
+   Polymer still paints #progress with #f00; newer view-models use
+   WatchedProgressBarSegment. Set brand-red on the host so it inherits
+   into any shadow tree, then override the filled segment in light DOM. */
+html[data-ctp-theme="custom"] ytd-thumbnail-overlay-resume-playback-renderer,
+html[data-ctp-theme="custom"] ytm-thumbnail-overlay-resume-playback-renderer,
+html[data-ctp-theme="custom"] ytw-thumbnail-overlay-resume-playback-renderer,
+html[data-ctp-theme="custom"] yt-thumbnail-overlay-progress-bar-view-model {
+  --yt-spec-static-brand-red: var(--ctp-theme-accent) !important;
+}
+
+html[data-ctp-theme="custom"] ytd-thumbnail-overlay-resume-playback-renderer #progress,
+html[data-ctp-theme="custom"] ytm-thumbnail-overlay-resume-playback-renderer #progress,
+html[data-ctp-theme="custom"] ytw-thumbnail-overlay-resume-playback-renderer [class*="ResumePlaybackProgress"],
+html[data-ctp-theme="custom"] [class*="WatchedProgressBarSegment"] {
+  background: var(--ctp-theme-accent) !important;
+  background-color: var(--ctp-theme-accent) !important;
+  background-image: none !important;
 }
 
 /* SponsorBlock markers sit above the themed play-progress fill. */
