@@ -41,9 +41,30 @@ try {
   assert.equal(colors.polymer, "rgb(56, 189, 248)");
   assert.equal(colors.viewModel, "rgb(56, 189, 248)");
   assert.equal(colors.watch, "rgb(56, 189, 248)");
+  await page.hover('#hover-preview');
+  const playedSelectors = [
+    '.ytProgressBarLineProgressBarPlayed',
+    '.ytProgressBarPlayheadProgressBarPlayheadDot',
+    '.ytChapteredProgressBarChapteredPlayerBarChapterSeen',
+    '.ytChapteredProgressBarChapteredPlayerBarFill',
+    '.ytFocusedChapterProgressBarLineProgressBarPlayed',
+    '.ytp-play-progress',
+  ];
+  for (const accent of ['#38bdf8', '#5900ff']) {
+    await page.evaluate(accent => document.documentElement.style.setProperty('--ctp-custom-accent', accent), accent);
+    const expected = accent === '#38bdf8' ? 'rgb(56, 189, 248)' : 'rgb(89, 0, 255)';
+    for (const selector of playedSelectors) {
+      const style = await page.$eval(selector, el => ({ color: getComputedStyle(el).backgroundColor, image: getComputedStyle(el).backgroundImage }));
+      assert.equal(style.color, expected, selector);
+      assert.equal(style.image, 'none', selector);
+    }
+    assert.equal(await page.$eval('.ytProgressBarLineProgressBarLoaded', el => getComputedStyle(el).backgroundColor), 'rgba(255, 255, 255, 0.6)');
+  }
   await page.screenshot({ path: shot });
+  await page.evaluate(() => document.documentElement.removeAttribute('data-ctp-theme'));
+  assert.match(await page.$eval('.ytProgressBarLineProgressBarPlayed', el => getComputedStyle(el).backgroundImage), /rgb\(255, 0, 51\)/);
 } finally {
   await browser.close();
 }
 
-console.log("PASS: theme accent applies to video thumbnail resume bars.");
+console.log("PASS: theme accent applies to resume bars and dynamically inserted hover-player progress, chapters, and playhead; palette updates and disabling work; buffer color is preserved.");

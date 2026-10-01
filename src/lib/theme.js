@@ -155,6 +155,10 @@ export function customThemeCssVars(palette) {
     "--ctp-theme-text": next.text,
     "--ctp-theme-muted": next.muted,
     "--ctp-theme-accent": next.accent,
+    "--ctp-theme-logo-glyph":
+      contrastRatio("#ffffff", next.accent) >= contrastRatio("#000000", next.accent)
+        ? "#ffffff"
+        : "#000000",
     "--ctp-theme-hover": next.hover,
     "--ctp-theme-outline": next.outline,
     "--ctp-theme-chip": next.hover,
@@ -202,6 +206,13 @@ export function youtubeSpecVars(palette, { textAndAccent = false } = {}) {
     vars["--yt-endpoint-color"] = next.accent;
     vars["--yt-spec-icon-inactive"] = next.muted;
     vars["--yt-spec-icon-active-other"] = next.text;
+    // Current YouTube components resolve text and button colors through the
+    // system baseline tokens rather than the older yt-spec aliases.
+    vars["--yt-sys-color-baseline--text-primary"] = next.text;
+    vars["--yt-sys-color-baseline--text-secondary"] = next.muted;
+    vars["--yt-sys-color-baseline--text-disabled"] = next.muted;
+    vars["--yt-sys-color-baseline--text-primary-inverse"] = next.background;
+    vars["--yt-sys-color-baseline--call-to-action"] = next.accent;
   }
   return vars;
 }

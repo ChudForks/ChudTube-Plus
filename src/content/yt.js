@@ -22,6 +22,8 @@ let currentTheme = THEME_OLED;
 let currentPalette = { ...OLED_PALETTE };
 const forcedDarkAttrs = new Set();
 const stampedVars = new Set();
+const generatedTextTokens = new Map();
+let generatedTokensDirty = true;
 let remapTimer = 0;
 let featureFilterTimer = 0;
 let featureObserver = null;
@@ -105,7 +107,10 @@ function bindPage() {
     boot.observe(document.documentElement, { childList: true, subtree: true });
   }
 
-  const headObs = new MutationObserver(scheduleRemap);
+  const headObs = new MutationObserver(() => {
+    generatedTokensDirty = true;
+    scheduleRemap();
+  });
   const watchHead = () => {
     if (document.head) headObs.observe(document.head, { childList: true });
   };
@@ -184,7 +189,6 @@ function applyTheme(theme, customTheme) {
   const nextTheme = theme === THEME_CUSTOM || theme === THEME_OLED ? theme : "default";
   const nextPalette = nextTheme === THEME_CUSTOM ? mergeCustomTheme(customTheme) : { ...OLED_PALETTE };
   const root = document.documentElement;
-  const themeChanged = currentTheme !== nextTheme;
   currentTheme = nextTheme;
   currentPalette = nextPalette;
 
@@ -202,8 +206,10 @@ function applyTheme(theme, customTheme) {
   root.setAttribute(ATTR, nextTheme);
   ensureAppearance();
   mountSheet();
+  // Recompute automatic background overrides for every palette change before
+  // stamping the explicit theme colors, including dark/gray text palettes.
+  clearRemap();
   stamp(true);
-  if (themeChanged) clearRemap();
   remapTokens();
 }
 
@@ -254,7 +260,35 @@ function stamp(on) {
 function stampVariables() {
   const spec = youtubeSpecVars(currentPalette, { textAndAccent: currentTheme === THEME_CUSTOM });
   if (currentTheme !== THEME_CUSTOM) return spec;
-  return { ...spec, ...customThemeCssVars(currentPalette) };
+  return { ...spec, ...customThemeCssVars(currentPalette), ...generatedTextVariables() };
+}
+
+function generatedTextVariables() {
+  // YouTube's generated --t<hash> tokens contain literal colors instead of
+  // referencing yt-spec/yt-sys. Identify their text roles in the native dark
+  // palette so light themes don't confuse dark text with dark backgrounds.
+  // Restore attributes synchronously, before the browser can paint.
+  const root = document.documentElement;
+  const added = generatedTokensDirty ? DARK_ATTRS.filter((name) => !root.hasAttribute(name)) : [];
+  for (const name of added) root.setAttribute(name, "");
+  try {
+    if (generatedTokensDirty) {
+      const styles = getComputedStyle(root);
+      for (let i = 0; i < styles.length; i += 1) {
+        const prop = styles[i];
+        if (!/^--t[0-9a-f]{16}$/.test(prop) || generatedTextTokens.has(prop)) continue;
+        const gray = parseCssGray(styles.getPropertyValue(prop));
+        if (gray === 241) generatedTextTokens.set(prop, "text");
+        else if (gray === 170 || gray === 113) generatedTextTokens.set(prop, "muted");
+      }
+      generatedTokensDirty = false;
+    }
+  } finally {
+    for (const name of added) root.removeAttribute(name);
+  }
+  return Object.fromEntries(
+    [...generatedTextTokens].map(([prop, role]) => [prop, currentPalette[role]])
+  );
 }
 
 function mountSheet() {
@@ -343,6 +377,7 @@ function remapOn(el) {
   for (let i = 0; i < styles.length; i += 1) {
     const prop = styles[i];
     if (!prop.startsWith("--")) continue;
+    if (prop.startsWith("--ctp-") || stampedVars.has(prop)) continue;
     if (!shouldRemapToken(styles.getPropertyValue(prop))) continue;
     el.style.setProperty(prop, fill, "important");
     bucket.add(prop);

@@ -95,6 +95,8 @@ html[data-ctp-theme] [dark] {
 }
 
 html[data-ctp-theme="custom"]:not(.style-scope),
+html[data-ctp-theme="custom"][dark],
+html[data-ctp-theme="custom"][darker-dark-theme],
 html[data-ctp-theme="custom"] ytd-app,
 html[data-ctp-theme="custom"] [dark] {
   --yt-spec-text-primary: var(--ctp-theme-text) !important;
@@ -111,6 +113,11 @@ html[data-ctp-theme="custom"] [dark] {
   --yt-spec-icon-inactive: var(--ctp-theme-muted) !important;
   --yt-spec-icon-active-other: var(--ctp-theme-text) !important;
   --yt-spec-icon-disabled: var(--ctp-theme-muted) !important;
+  --yt-sys-color-baseline--text-primary: var(--ctp-theme-text) !important;
+  --yt-sys-color-baseline--text-secondary: var(--ctp-theme-muted) !important;
+  --yt-sys-color-baseline--text-disabled: var(--ctp-theme-muted) !important;
+  --yt-sys-color-baseline--text-primary-inverse: var(--ctp-theme-bg, #000) !important;
+  --yt-sys-color-baseline--call-to-action: var(--ctp-theme-accent) !important;
   --yt-live-chat-primary-text-color: var(--ctp-theme-text) !important;
   --yt-live-chat-secondary-text-color: var(--ctp-theme-muted) !important;
 }
@@ -123,19 +130,27 @@ html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg > g:first-
   fill: var(--ctp-theme-accent) !important;
 }
 
-html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg > g:first-child > path:nth-child(2),
-html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg #youtube-paths_yt115 path {
+html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg > g:first-child > path:nth-child(2) {
+  fill: var(--ctp-theme-logo-glyph, #fff) !important;
+}
+
+html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg [id^="youtube-paths"] path {
   fill: var(--ctp-theme-text) !important;
 }
 
-html[data-ctp-theme="custom"] .ytp-play-progress.ytp-swatch-background-color {
-  background-image: linear-gradient(
-    var(--ctp-theme-accent),
-    var(--ctp-theme-accent)
-  ) !important;
+/* Hover previews use the newer player components with literal red-to-pink
+   gradients. Theme the played segments alongside the legacy player. */
+html[data-ctp-theme="custom"] .ytp-play-progress,
+html[data-ctp-theme="custom"] .ytProgressBarLineProgressBarPlayed,
+html[data-ctp-theme="custom"] .ytChapteredProgressBarChapteredPlayerBarChapterSeen,
+html[data-ctp-theme="custom"] .ytChapteredProgressBarChapteredPlayerBarFill,
+html[data-ctp-theme="custom"] .ytFocusedChapterProgressBarLineProgressBarPlayed {
+  background: var(--ctp-theme-accent) !important;
+  background-image: none !important;
 }
 
-html[data-ctp-theme="custom"] .ytp-scrubber-button.ytp-swatch-background-color {
+html[data-ctp-theme="custom"] .ytp-scrubber-button.ytp-swatch-background-color,
+html[data-ctp-theme="custom"] .ytProgressBarPlayheadProgressBarPlayheadDot {
   background-color: var(--ctp-theme-accent) !important;
 }
 
