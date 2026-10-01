@@ -6,7 +6,6 @@ export const YOUTUBE_THEMES = ["default", "custom"];
 export const YTM_THEMES = ["default", "oled-black"];
 export const LYRIC_THEMES = ["classic", "oled-bounce", "compact"];
 export const LYRIC_SOURCES = ["auto", "youtube", "lrclib"];
-export const LYRIC_MOTIONS = ["full", "system", "reduced"];
 export const SPONSOR_SKIP_MODES = ["auto", "button", "off"];
 
 export const SPONSOR_CATEGORIES = [
@@ -81,7 +80,6 @@ export const DEFAULT_SETTINGS = {
     followAlongLyrics: true,
     lyricsTheme: "classic",
     lyricsSource: "auto",
-    lyricsMotion: "full",
     theme: "oled-black",
   },
   youtube: {
@@ -131,9 +129,6 @@ export function mergeSettings(stored) {
       lyricsSource: LYRIC_SOURCES.includes(incoming.ytm?.lyricsSource)
         ? incoming.ytm.lyricsSource
         : DEFAULT_SETTINGS.ytm.lyricsSource,
-      lyricsMotion: LYRIC_MOTIONS.includes(incoming.ytm?.lyricsMotion)
-        ? incoming.ytm.lyricsMotion
-        : DEFAULT_SETTINGS.ytm.lyricsMotion,
       theme: YTM_THEMES.includes(incoming.ytm?.theme)
         ? incoming.ytm.theme
         : DEFAULT_SETTINGS.ytm.theme,

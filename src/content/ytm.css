@@ -99,6 +99,8 @@ ytmusic-player-bar .middle-controls {
 .ctp-lyrics {
   --ctp-red: #ff0000;
   --ctp-red-soft: rgba(255, 0, 0, 0.16);
+  container-type: inline-size;
+  container-name: ctp-lyrics;
   box-sizing: border-box;
   position: relative;
   display: flex;
@@ -139,8 +141,8 @@ ytmusic-player-bar .middle-controls {
   top: 0;
   z-index: 4;
   display: grid;
-  gap: 8px;
-  padding: 12px 16px;
+  gap: 0;
+  padding: 10px 12px 12px;
   background: #000;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -148,38 +150,48 @@ ytmusic-player-bar .middle-controls {
 .ctp-control {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  min-height: 38px;
   min-width: 0;
   color: rgba(255, 255, 255, 0.65);
   font-size: 12px;
 }
 
 .ctp-control > span {
-  width: 46px;
+  width: 48px;
   flex: none;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .ctp-control select {
   flex: 1;
   min-width: 0;
   width: 100%;
-  padding: 7px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
-  color: #fff;
-  background: #202023;
+  min-height: 34px;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: rgba(255, 255, 255, 0.78);
+  background: #000;
   color-scheme: dark;
   font: inherit;
   cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease;
+}
+
+.ctp-control select:hover,
+.ctp-control select:focus-visible {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 .ctp-control select:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
-}
-
-.ctp-lyrics:not([data-theme="oled-bounce"]) .ctp-motion-control {
-  display: none;
 }
 
 .ctp-content .ctp-toolbar {
@@ -442,11 +454,11 @@ ytmusic-player-bar .middle-controls {
   line-height: 1.55;
 }
 
-/* OLED Bounce keeps the entire panel black. Only the active lyric moves;
-   transforms leave line heights stable while the playback scroll follows. */
+/* Panel-relative sizing keeps the lyric rhythm consistent beside the player.
+   Springs use transforms only, so line changes never reflow the transcript. */
 #ctp-lyrics-root[data-theme="oled-bounce"],
 .ctp-lyrics[data-theme="oled-bounce"] {
-  padding: 0 12px 24px;
+  padding: 0 16px 20px;
   background: #000;
   overflow-x: clip;
   --ctp-red: #fff;
@@ -454,18 +466,8 @@ ytmusic-player-bar .middle-controls {
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-toolbar {
   position: relative;
-  padding: 18px 16px 8px;
+  padding: 24px 12px 0;
   background: transparent;
-}
-
-.ctp-lyrics[data-theme="oled-bounce"] .ctp-controls {
-  background: #000;
-  border-bottom: 0;
-}
-
-.ctp-lyrics[data-theme="oled-bounce"] .ctp-control select {
-  background: #000;
-  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-ident {
@@ -473,24 +475,41 @@ ytmusic-player-bar .middle-controls {
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-badge {
-  margin-left: auto;
-  color: rgba(255, 255, 255, 0.55);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.42);
   border: 0;
   background: transparent;
-  font-size: 10px;
-  letter-spacing: 0.08em;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+
+.ctp-lyrics[data-theme="oled-bounce"] .ctp-badge::before {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.ctp-lyrics[data-theme="oled-bounce"][data-synced="true"] .ctp-badge::before {
+  background: #fff;
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-list {
-  gap: 14px;
-  padding: 18vh 0 36vh;
+  gap: 8px;
+  padding: clamp(48px, 10vh, 96px) 0 clamp(160px, 32vh, 320px);
   mask-image: none;
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-line {
   display: block;
-  padding: 12px 20px;
-  border-radius: 8px;
+  padding: 14px 12px;
+  border-radius: 12px;
+  font-family: inherit;
   opacity: 1;
   box-shadow: none;
   background: transparent;
@@ -503,15 +522,17 @@ ytmusic-player-bar .middle-controls {
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-text {
-  color: rgba(255, 255, 255, 0.34);
-  font-size: clamp(28px, 2.7vw, 38px);
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 32px;
+  font-size: clamp(28px, 8.4cqi, 40px);
   font-weight: 750;
-  letter-spacing: -0.025em;
-  line-height: 1.4;
+  letter-spacing: -0.035em;
+  line-height: 1.32;
+  text-wrap: pretty;
   overflow-wrap: anywhere;
-  transform: scale(0.95);
+  transform: scale(0.98);
   transform-origin: left center;
-  transition: color 320ms ease, transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: color 360ms ease, transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-word {
@@ -521,25 +542,25 @@ ytmusic-player-bar .middle-controls {
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-line-past .ctp-text {
-  color: rgba(255, 255, 255, 0.24);
+  color: rgba(255, 255, 255, 0.22);
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-line-next .ctp-text {
-  color: rgba(255, 255, 255, 0.52);
+  color: rgba(255, 255, 255, 0.54);
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-line-soon .ctp-text {
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.38);
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-line-active .ctp-text {
   color: #fff;
-  transform: scale(1.03);
-  animation: ctp-lyric-bounce 980ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  transform: scale(1);
+  animation: ctp-lyric-bounce 720ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-line-active .ctp-word {
-  animation: ctp-word-bounce 780ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation: ctp-word-bounce 520ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
   animation-delay: var(--ctp-word-delay, 0ms);
 }
 
@@ -548,26 +569,71 @@ ytmusic-player-bar .middle-controls {
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-footer {
+  gap: 10px;
+  min-height: 52px;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: #000;
-  color: rgba(255, 255, 255, 0.55);
-  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 10px;
+  letter-spacing: 0.02em;
   text-transform: none;
 }
 
+.ctp-lyrics[data-theme="oled-bounce"] .ctp-footer > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ctp-lyrics[data-theme="oled-bounce"] .ctp-follow {
+  flex: none;
+  min-height: 32px;
+  background: #000;
+  border-color: rgba(255, 255, 255, 0.2);
+  font: inherit;
+  color: rgba(255, 255, 255, 0.8);
+  transition: border-color 180ms ease, color 180ms ease;
+}
+
+.ctp-lyrics[data-theme="oled-bounce"] .ctp-follow:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+
+/* Every theme shares the same pickers; only the lyrics change presentation. */
+@container ctp-lyrics (min-width: 480px) {
+  .ctp-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    padding-top: 18px;
+  }
+
+  .ctp-control {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .ctp-control > span {
+    width: auto;
+    padding-left: 8px;
+  }
+}
+
 @keyframes ctp-lyric-bounce {
-  0% { transform: translateY(20px) scale(0.92); }
-  34% { transform: translateY(-9px) scale(1.065); }
-  56% { transform: translateY(4px) scale(1.01); }
-  74% { transform: translateY(-2px) scale(1.038); }
-  90% { transform: translateY(0.7px) scale(1.022); }
-  100% { transform: translateY(0) scale(1.03); }
+  0% { transform: translateY(10px) scale(0.97); }
+  34% { transform: translateY(-3px) scale(1.015); }
+  56% { transform: translateY(1.2px) scale(0.997); }
+  74% { transform: translateY(-0.5px) scale(1.003); }
+  100% { transform: translateY(0) scale(1); }
 }
 
 @keyframes ctp-word-bounce {
-  0% { transform: translateY(12px) scale(0.88); opacity: 0.55; }
-  38% { transform: translateY(-5px) scale(1.04); opacity: 1; }
-  62% { transform: translateY(2px) scale(0.99); }
-  82% { transform: translateY(-0.8px) scale(1.01); }
+  0% { transform: translateY(5px) scale(0.98); opacity: 0.72; }
+  38% { transform: translateY(-1.5px) scale(1.01); opacity: 1; }
+  62% { transform: translateY(0.6px) scale(0.998); }
   100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
@@ -609,23 +675,9 @@ ytmusic-player-bar .middle-controls {
   color: rgba(255, 255, 255, 0.8);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ctp-lyrics .ctp-line,
-  .ctp-lyrics .ctp-text {
-    transition: none;
-  }
-}
-
-/* Motion is explicit for the animated theme: Full also works on devices
-   with system animations disabled; System and Reduced resolve in the controller. */
-.ctp-lyrics[data-theme="oled-bounce"][data-motion="reduced"] .ctp-text,
-.ctp-lyrics[data-theme="oled-bounce"][data-motion="reduced"] .ctp-line-active .ctp-text,
-.ctp-lyrics[data-theme="oled-bounce"][data-motion="reduced"] .ctp-word,
-.ctp-lyrics[data-theme="oled-bounce"][data-motion="reduced"] .ctp-line-active .ctp-word {
-  animation: none;
+.ctp-lyrics[data-theme="oled-bounce"][data-synced="false"] .ctp-text {
+  color: rgba(255, 255, 255, 0.8);
   transform: none;
-  transition: none;
-  opacity: 1;
 }
 
 ytmusic-player-page .tab-header.ctp-lyrics-tab[disabled],

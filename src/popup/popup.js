@@ -20,7 +20,6 @@ const MODE_TITLES = {
 const followAlong = document.getElementById("followAlongLyrics");
 const lyricsTheme = document.getElementById("lyricsTheme");
 const lyricsSource = document.getElementById("lyricsSource");
-const lyricsMotion = document.getElementById("lyricsMotion");
 const LYRIC_THEME_HELP = {
   classic: "Timestamps and a red progress bar.",
   "oled-bounce": "Pure black with bold lyrics, springy line changes, and a staggered word entrance.",
@@ -85,7 +84,7 @@ followAlong.addEventListener("change", async () => {
   });
 });
 
-for (const [input, key] of [[lyricsTheme, "lyricsTheme"], [lyricsSource, "lyricsSource"], [lyricsMotion, "lyricsMotion"]]) {
+for (const [input, key] of [[lyricsTheme, "lyricsTheme"], [lyricsSource, "lyricsSource"]]) {
   input.addEventListener("change", async () => {
     const current = await getSettings();
     await setSettings({ ...current, ytm: { ...current.ytm, [key]: input.value } });
@@ -148,9 +147,7 @@ function renderSettings(next) {
   followAlong.checked = Boolean(next.ytm.followAlongLyrics);
   lyricsTheme.value = next.ytm.lyricsTheme;
   lyricsSource.value = next.ytm.lyricsSource;
-  lyricsMotion.value = next.ytm.lyricsMotion;
   lyricsTheme.disabled = lyricsSource.disabled = !next.ytm.followAlongLyrics;
-  lyricsMotion.disabled = !next.ytm.followAlongLyrics;
   document.getElementById("lyrics-theme-help").textContent = LYRIC_THEME_HELP[next.ytm.lyricsTheme];
   document.getElementById("lyrics-source-help").textContent = LYRIC_SOURCE_HELP[next.ytm.lyricsSource];
   customTheme.checked = next.youtube.theme === "custom";

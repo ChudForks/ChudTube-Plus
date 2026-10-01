@@ -5,7 +5,7 @@ try {
   const page = await browser.newPage();
   await page.setViewport({width:388,height:560,deviceScaleFactor:2});
   await page.evaluateOnNewDocument(() => {
-    window.saved = {sponsorBlock:{showSegmentColors:true},ytm:{followAlongLyrics:true},youtube:{theme:'oled-black',hideShorts:false,hidePlayables:false}};
+    window.saved = {sponsorBlock:{showSegmentColors:true},ytm:{followAlongLyrics:true,lyricsMotion:'reduced'},youtube:{theme:'oled-black',hideShorts:false,hidePlayables:false}};
     window.storageListeners = [];
     window.chrome = {
       storage:{
@@ -34,16 +34,14 @@ try {
   assert.equal(await page.$eval('#followAlongLyrics',e=>e.checked),true);
   assert.equal(await page.$eval('#lyricsTheme',e=>e.value),'classic');
   assert.equal(await page.$eval('#lyricsSource',e=>e.value),'auto');
-  assert.equal(await page.$eval('#lyricsMotion',e=>e.value),'full');
-  await page.select('#lyricsMotion','system');
-  await page.waitForFunction(()=>window.saved.ytm.lyricsMotion==='system');
+  assert.equal(await page.$('#lyricsMotion'),null);
   await page.select('#lyricsTheme','oled-bounce');
   await page.waitForFunction(()=>window.saved.ytm.lyricsTheme==='oled-bounce');
   await page.select('#lyricsSource','youtube');
   await page.waitForFunction(()=>window.saved.ytm.lyricsSource==='youtube');
   assert.match(await page.$eval('#lyrics-source-help',e=>e.textContent),/no LRCLIB lookup/);
   assert.equal(await page.evaluate(()=>window.saved.ytm.lyricsTheme),'oled-bounce');
-  assert.equal(await page.evaluate(()=>window.saved.ytm.lyricsMotion),'system');
+  assert.equal(await page.evaluate(()=>Object.hasOwn(window.saved.ytm,'lyricsMotion')),false);
   assert.equal(await page.$eval('input[name="sponsorBlock-sponsor"][value="button"]',e=>e.checked),true);
   await page.click('#customTheme');
   await page.waitForFunction(()=>window.saved.youtube.theme==='default');
@@ -77,7 +75,6 @@ try {
   await page.waitForFunction(()=>window.saved.ytm.followAlongLyrics===false);
   assert.equal(await page.$eval('#lyricsTheme',e=>e.disabled),true);
   assert.equal(await page.$eval('#lyricsSource',e=>e.disabled),true);
-  assert.equal(await page.$eval('#lyricsMotion',e=>e.disabled),true);
   await page.keyboard.press('Space');
   await page.waitForFunction(()=>window.saved.ytm.followAlongLyrics===true);
   assert.equal(await page.$eval('#lyricsTheme',e=>e.disabled),false);

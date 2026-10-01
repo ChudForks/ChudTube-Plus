@@ -1,4 +1,4 @@
-import { getSettings, onSettingsChanged, LYRIC_SOURCES, LYRIC_THEMES, LYRIC_MOTIONS } from "../lib/settings.js";
+import { getSettings, onSettingsChanged, LYRIC_SOURCES, LYRIC_THEMES } from "../lib/settings.js";
 import { activeLineIndex, formatTimestamp } from "../lib/lrc.js";
 import { cleanTitle, getPlayerVideo, isAdvertisement, readArtwork, readNowPlaying, trackKey } from "../lib/ytm-track.js";
 import { normalizeLyrics, youtubeLyricsFromText } from "../lib/youtube-lyrics.js";
@@ -15,9 +15,6 @@ let defaultLyricsTheme = "classic";
 let defaultLyricsSource = "auto";
 let lyricsThemeOverride = null;
 let lyricsSourceOverride = null;
-let lyricsMotion = "full";
-let defaultLyricsMotion = "full";
-let lyricsMotionOverride = null;
 let nativeWaitStartedAt = 0;
 let started = false;
 let currentKey = "";
@@ -49,8 +46,6 @@ let lastRender = null;
 const VISIBILITY_LOCK_MS = 800;
 const SOURCE_LABELS = { auto: "Automatic", youtube: "YouTube Music", lrclib: "LRCLIB" };
 const THEME_LABELS = { classic: "Classic", "oled-bounce": "OLED Bounce", compact: "Compact" };
-const MOTION_LABELS = { full: "Full animation", system: "System preference", reduced: "Reduced motion" };
-const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const bootStatus = document.getElementById("ctp-boot-status");
 if (bootStatus && bootStatus.dataset.error !== "1") {
@@ -64,12 +59,6 @@ async function init() {
   enabled = Boolean(settings.ytm.followAlongLyrics);
   defaultLyricsTheme = lyricsTheme = settings.ytm.lyricsTheme;
   defaultLyricsSource = lyricsSource = settings.ytm.lyricsSource;
-  defaultLyricsMotion = lyricsMotion = settings.ytm.lyricsMotion;
-  motionPreference.addEventListener("change", () => {
-    if (!enabled || lyricsMotion !== "system") return;
-    render();
-    paintActiveLine(true);
-  });
   log("settings loaded", settings);
   window.addEventListener("message", onPageMessage);
   document.addEventListener("click", onDocumentClick, true);
@@ -78,21 +67,17 @@ async function init() {
     const shouldEnable = Boolean(next.ytm.followAlongLyrics);
     defaultLyricsTheme = next.ytm.lyricsTheme;
     defaultLyricsSource = next.ytm.lyricsSource;
-    defaultLyricsMotion = next.ytm.lyricsMotion;
-    const nextMotion = lyricsMotionOverride ?? defaultLyricsMotion;
     const nextSource = lyricsSourceOverride ?? defaultLyricsSource;
     const nextTheme = lyricsThemeOverride ?? defaultLyricsTheme;
     const sourceChanged = nextSource !== lyricsSource;
     const themeChanged = nextTheme !== lyricsTheme;
-    const motionChanged = nextMotion !== lyricsMotion;
     lyricsTheme = nextTheme;
     lyricsSource = nextSource;
-    lyricsMotion = nextMotion;
     if (shouldEnable === enabled) {
       if (!enabled) return;
       if (sourceChanged) reloadLyrics();
       else render();
-      if (themeChanged || motionChanged) {
+      if (themeChanged) {
         paintActiveLine(true);
       }
       return;
@@ -683,12 +668,6 @@ function bindRootEvents(root) {
       lyricsTheme = lyricsThemeOverride ?? defaultLyricsTheme;
       render();
       paintActiveLine(true);
-    } else if (input.id === "ctp-lyrics-motion") {
-      if (input.value !== "default" && !LYRIC_MOTIONS.includes(input.value)) return;
-      lyricsMotionOverride = input.value === "default" ? null : input.value;
-      lyricsMotion = lyricsMotionOverride ?? defaultLyricsMotion;
-      render();
-      paintActiveLine(true);
     }
     syncLyricsControls(root);
   });
@@ -715,11 +694,9 @@ function createLyricsControls() {
   for (const [kind, label, values, labels] of [
     ["source", "Source", LYRIC_SOURCES, SOURCE_LABELS],
     ["theme", "Theme", LYRIC_THEMES, THEME_LABELS],
-    ["motion", "Motion", LYRIC_MOTIONS, MOTION_LABELS],
   ]) {
     const row = document.createElement("label");
     row.className = "ctp-control";
-    if (kind === "motion") row.classList.add("ctp-motion-control");
     const text = document.createElement("span");
     text.textContent = label;
     const select = document.createElement("select");
@@ -741,7 +718,6 @@ function syncLyricsControls(root) {
   for (const [kind, defaultValue, override, labels] of [
     ["source", defaultLyricsSource, lyricsSourceOverride, SOURCE_LABELS],
     ["theme", defaultLyricsTheme, lyricsThemeOverride, THEME_LABELS],
-    ["motion", defaultLyricsMotion, lyricsMotionOverride, MOTION_LABELS],
   ]) {
     const select = root.querySelector(`#ctp-lyrics-${kind}`);
     if (!select) continue;
@@ -763,7 +739,6 @@ function render() {
   if (!root) return;
   root.dataset.theme = lyricsTheme;
   root.dataset.synced = String(Boolean(lyricsState.synced));
-  root.dataset.motion = reducedMotionEnabled() ? "reduced" : "full";
   syncLyricsControls(root);
   const ad = isAdvertisement();
   if (lastRender?.root === root && lastRender.state === lyricsState &&
@@ -902,12 +877,7 @@ function paintActiveLine(force = false) {
   root.classList.remove("ctp-user-scrolling");
   const current = lines[activeIndex];
   if (!current || root.hidden || !isLyricsTabActive()) return;
-  const reducedMotion = reducedMotionEnabled();
-  current.scrollIntoView({ block: "center", inline: "nearest", behavior: force || reducedMotion ? "auto" : "smooth" });
-}
-
-function reducedMotionEnabled() {
-  return lyricsMotion === "reduced" || (lyricsMotion === "system" && motionPreference.matches);
+  current.scrollIntoView({ block: "center", inline: "nearest", behavior: force ? "auto" : "smooth" });
 }
 
 function isLyricsPanelVisible() {

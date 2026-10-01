@@ -17,7 +17,9 @@ assert.equal(mergeSettings({ ytm: { lyricsSource: "unknown" } }).ytm.lyricsSourc
 assert.deepEqual(mergeSettings({ ytm: { followAlongLyrics: false } }).ytm, { ...DEFAULT_SETTINGS.ytm, followAlongLyrics: false });
 assert.equal(mergeSettings({ ytm: { lyricsTheme: "oled-bounce", lyricsSource: "youtube" } }).ytm.lyricsSource, "youtube");
 assert.equal(mergeSettings({ ytm: { lyricsTheme: "ytm" } }).ytm.lyricsTheme, "oled-bounce");
-assert.equal(mergeSettings({ ytm: { lyricsMotion: "unknown" } }).ytm.lyricsMotion, "full");
+for (const lyricsMotion of ["full", "system", "reduced", "unknown"]) {
+  assert.equal(Object.hasOwn(mergeSettings({ ytm: { lyricsMotion } }).ytm, "lyricsMotion"), false);
+}
 
 const errors = [];
 try {
@@ -51,7 +53,7 @@ try {
   </body></html>`);
   await page.addStyleTag({ path: path.join(root, "src/content/ytm.css") });
   await page.evaluate(() => {
-    window.settings = { ytm: { followAlongLyrics: true, lyricsTheme: "ytm", lyricsSource: "youtube" } };
+    window.settings = { ytm: { followAlongLyrics: true, lyricsTheme: "ytm", lyricsSource: "youtube", lyricsMotion: "reduced" } };
     window.listeners = [];
     window.requests = [];
     window.pending = [];
@@ -77,6 +79,8 @@ try {
   });
   await page.evaluate(url => import(url), base + "src/content/ytm.js");
   await page.waitForFunction(() => document.querySelectorAll(".ctp-line").length === 2);
+  assert.equal(await page.$("#ctp-lyrics-motion"), null);
+  assert.equal(await page.$$eval(".ctp-controls select", inputs => inputs.length), 2);
   assert.equal(await page.$eval("#ctp-lyrics-source", el => el.value), "default");
   assert.equal(await page.$eval("#ctp-lyrics-source", el => el.options[0].textContent), "Default: YouTube Music");
   assert.equal(await page.$eval("#ctp-lyrics-theme", el => el.options[0].textContent), "Default: OLED Bounce");
@@ -127,27 +131,38 @@ try {
     if (theme === "compact") assert.equal(styles.font, 18);
     assert.equal(await page.$eval(".ctp-line-active .ctp-meter-fill", el => el.getAnimations().length), theme === "classic" ? 1 : 0);
   }
-  for (const width of [280, 360, 520]) {
+  const panelFonts = [];
+  for (const width of [280, 360, 520, 700]) {
     await page.$eval("#tab-renderer", (el, width) => { el.style.width = width + "px"; }, width);
     assert.equal(await page.$eval("#tab-renderer", el => el.scrollWidth <= el.clientWidth), true);
+    panelFonts.push(await page.$eval(".ctp-text", el => parseFloat(getComputedStyle(el).fontSize)));
   }
+  assert.ok(panelFonts[0] < panelFonts[2], "lyric sizing responds to the panel width");
+  assert.ok(panelFonts.every(size => size >= 28 && size <= 40));
+  const widePanelFont = panelFonts[3];
+  await page.setViewport({ width: 1440, height: 700 });
+  assert.equal(await page.$eval(".ctp-text", el => parseFloat(getComputedStyle(el).fontSize)), widePanelFont,
+    "widening the window alone does not enlarge lyrics");
+  await page.setViewport({ width: 900, height: 700 });
   await page.$eval("#tab-renderer", el => { el.style.width = "360px"; });
   const bounce = await page.$eval(".ctp-line-active .ctp-text", el => el.getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.effect.getTiming());
-  assert.equal(bounce.duration, 980);
+  assert.ok(bounce.duration >= 500 && bounce.duration <= 800, "spring settles promptly");
   assert.equal(bounce.iterations, 1);
   const samples = await page.$eval(".ctp-line-active .ctp-text", el => {
     const animation = el.getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce");
     animation.pause();
     const samples = [0, 0.34, 0.56, 0.74, 1].map(progress => {
-      animation.currentTime = progress * 980;
+      animation.currentTime = progress * animation.effect.getTiming().duration;
       const matrix = new DOMMatrix(getComputedStyle(el).transform);
       return { y: matrix.m42, scale: matrix.m11 };
     });
     animation.finish();
     return samples;
   });
-  assert.ok(Math.max(...samples.map(sample => sample.y)) - Math.min(...samples.map(sample => sample.y)) >= 28);
-  assert.ok(Math.max(...samples.map(sample => sample.scale)) > 1.06);
+  const travel = Math.max(...samples.map(sample => sample.y)) - Math.min(...samples.map(sample => sample.y));
+  assert.ok(travel >= 10 && travel <= 16, "bounce stays visible without excessive travel");
+  assert.ok(Math.max(...samples.map(sample => sample.scale)) > 1 && Math.max(...samples.map(sample => sample.scale)) <= 1.025);
+  assert.equal(samples.at(-1).scale, 1, "settled text stays within its original layout");
   assert.equal(await page.$eval(".ctp-line-active .ctp-text", el => el.textContent), "LRCLIB active line");
   assert.deepEqual(await page.$$eval(".ctp-line-active .ctp-word", words => words.map(el => el.getAnimations().find(animation => animation.animationName === "ctp-word-bounce")?.effect.getTiming().delay)), [0, 32, 64]);
   await page.waitForFunction(() => document.querySelector(".ctp-line-active .ctp-text").getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.playState === "finished");
@@ -159,22 +174,17 @@ try {
   assert.deepEqual(await page.$eval('.ctp-line[data-index="2"]', el => ({ height: el.offsetHeight, top: el.offsetTop })), beforeChange);
   assert.equal(await page.$eval('.ctp-line[data-index="1"] .ctp-text', el => el.getAnimations().filter(animation => animation.animationName === "ctp-lyric-bounce").length), 0);
   await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
-  assert.equal(await page.$eval("#ctp-lyrics-root", el => el.dataset.motion), "full");
   assert.equal(await page.$eval(".ctp-line-active .ctp-text", el => el.getAnimations().filter(animation => animation.animationName === "ctp-lyric-bounce").length), 1);
-  await page.select("#ctp-lyrics-motion", "system");
+  await options(page, { lyricsMotion: "system" });
   await page.evaluate(() => window.postMessage({ type: "CTP_TIME", currentTime: 12, paused: true }, "*"));
   await page.waitForFunction(() => document.querySelector(".ctp-line-active")?.dataset.index === "1");
-  assert.equal(await page.$eval(".ctp-line-active .ctp-text", el => el.getAnimations().length), 0);
-  assert.equal(await page.$eval(".ctp-line-active .ctp-text", el => getComputedStyle(el).transform), "none");
-  assert.equal(await page.$$eval(".ctp-line-active .ctp-word", words => words.reduce((count, el) => count + el.getAnimations().length, 0)), 0);
+  assert.equal(await page.$eval(".ctp-line-active .ctp-text", el => el.getAnimations().filter(animation => animation.animationName === "ctp-lyric-bounce").length), 1);
+  assert.equal(await page.$$eval(".ctp-line-active .ctp-word", words => words.every(el => el.getAnimations().some(animation => animation.animationName === "ctp-word-bounce"))), true);
+  assert.notEqual(await page.$eval(".ctp-line-active .ctp-text", el => getComputedStyle(el).transitionDuration), "0s");
   await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "no-preference" }]);
-  await page.waitForFunction(() => document.querySelector("#ctp-lyrics-root").dataset.motion === "full");
-  await page.select("#ctp-lyrics-motion", "reduced");
-  assert.equal(await page.$eval("#ctp-lyrics-root", el => el.dataset.motion), "reduced");
-  await page.select("#ctp-lyrics-motion", "default");
   await page.waitForFunction(() => document.querySelector(".ctp-line-active .ctp-text").getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.playState === "finished");
   await (await page.$("#tab-renderer")).screenshot({ path: path.join(root, "scripts/verify-lyrics-oled-bounce.png") });
-  console.log("PASS: pure black, visible 29px springs, staggered words, stable line layout, and Full/System/Reduced motion controls.");
+  console.log("PASS: pure black, restrained springs, staggered words, panel-relative sizing, stable layout, and always-full motion despite legacy settings or system preferences.");
   await page.click('.ctp-line[data-index="2"]');
   assert.equal(await page.$eval("video", el => el.currentTime), 20);
   console.log("PASS: all themes preserve lyric nodes and playback, OLED Bounce/compact skip meter animations, layouts fit narrow panels, and click-to-seek works.");
