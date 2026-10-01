@@ -82,10 +82,39 @@
         <label class="setting">
           <span class="copy">
             <span class="setting-title">Follow-along lyrics</span>
-            <span class="setting-help" id="lyrics-help">Show official lyrics and LRCLIB timing when available. Select a timed line to seek.</span>
+            <span class="setting-help" id="lyrics-help">Highlight and follow timed lyrics. Select a timed line to seek.</span>
           </span>
           <input id="followAlongLyrics" type="checkbox" role="switch" aria-label="Follow-along lyrics" aria-describedby="lyrics-help" />
         </label>
+        <div class="lyrics-options">
+          <label class="select-setting" for="lyricsTheme">
+            <span class="setting-title">Default lyrics theme</span>
+            <select id="lyricsTheme" aria-describedby="lyrics-theme-help">
+              <option value="classic">Classic</option>
+              <option value="oled-bounce">OLED Bounce</option>
+              <option value="compact">Compact</option>
+            </select>
+          </label>
+          <p class="setting-help" id="lyrics-theme-help">Timestamps and a red progress bar.</p>
+          <label class="select-setting" for="lyricsSource">
+            <span class="setting-title">Default lyrics source</span>
+            <select id="lyricsSource" aria-describedby="lyrics-source-help">
+              <option value="auto">Automatic</option>
+              <option value="youtube">YouTube Music</option>
+              <option value="lrclib">LRCLIB</option>
+            </select>
+          </label>
+          <p class="setting-help" id="lyrics-source-help">Prefer LRCLIB timing, with built-in YouTube Music lyrics as a fallback.</p>
+          <label class="select-setting" for="lyricsMotion">
+            <span class="setting-title">Default lyrics motion</span>
+            <select id="lyricsMotion" aria-describedby="lyrics-motion-help">
+              <option value="full">Full animation</option>
+              <option value="system">System preference</option>
+              <option value="reduced">Reduced motion</option>
+            </select>
+          </label>
+          <p class="setting-help" id="lyrics-motion-help">Full enables bounce animations. System follows your device's reduced-motion setting.</p>
+        </div>
       </section>
     </main>
     <footer><span class="credits">Lyrics: YouTube Music &amp; <a href="https://lrclib.net" target="_blank" rel="noreferrer">LRCLIB <span aria-hidden="true">↗</span></a><span class="footer-separator" aria-hidden="true"></span>Segments: <a href="https://sponsor.ajay.app" target="_blank" rel="noreferrer">SponsorBlock <span aria-hidden="true">↗</span></a></span></footer>

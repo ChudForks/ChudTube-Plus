@@ -1,4 +1,4 @@
-import { getSettings, onSettingsChanged } from "../lib/settings.js";
+import { getSettings, onSettingsChanged, LYRIC_SOURCES, LYRIC_THEMES, LYRIC_MOTIONS } from "../lib/settings.js";
 import { activeLineIndex, formatTimestamp } from "../lib/lrc.js";
 import { cleanTitle, getPlayerVideo, isAdvertisement, readArtwork, readNowPlaying, trackKey } from "../lib/ytm-track.js";
 import { normalizeLyrics, youtubeLyricsFromText } from "../lib/youtube-lyrics.js";
@@ -9,6 +9,16 @@ const TAB_RENDERER = "#tab-renderer";
 const USER_SCROLL_MS = 4500;
 
 let enabled = false;
+let lyricsTheme = "classic";
+let lyricsSource = "auto";
+let defaultLyricsTheme = "classic";
+let defaultLyricsSource = "auto";
+let lyricsThemeOverride = null;
+let lyricsSourceOverride = null;
+let lyricsMotion = "full";
+let defaultLyricsMotion = "full";
+let lyricsMotionOverride = null;
+let nativeWaitStartedAt = 0;
 let started = false;
 let currentKey = "";
 let currentTrack = null;
@@ -37,6 +47,10 @@ let lastSeenNativeLyrics = "";
 let lastRender = null;
 
 const VISIBILITY_LOCK_MS = 800;
+const SOURCE_LABELS = { auto: "Automatic", youtube: "YouTube Music", lrclib: "LRCLIB" };
+const THEME_LABELS = { classic: "Classic", "oled-bounce": "OLED Bounce", compact: "Compact" };
+const MOTION_LABELS = { full: "Full animation", system: "System preference", reduced: "Reduced motion" };
+const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const bootStatus = document.getElementById("ctp-boot-status");
 if (bootStatus && bootStatus.dataset.error !== "1") {
@@ -48,13 +62,41 @@ init();
 async function init() {
   const settings = await getSettings();
   enabled = Boolean(settings.ytm.followAlongLyrics);
+  defaultLyricsTheme = lyricsTheme = settings.ytm.lyricsTheme;
+  defaultLyricsSource = lyricsSource = settings.ytm.lyricsSource;
+  defaultLyricsMotion = lyricsMotion = settings.ytm.lyricsMotion;
+  motionPreference.addEventListener("change", () => {
+    if (!enabled || lyricsMotion !== "system") return;
+    render();
+    paintActiveLine(true);
+  });
   log("settings loaded", settings);
   window.addEventListener("message", onPageMessage);
   document.addEventListener("click", onDocumentClick, true);
   if (enabled) start();
   onSettingsChanged((next) => {
     const shouldEnable = Boolean(next.ytm.followAlongLyrics);
-    if (shouldEnable === enabled) return;
+    defaultLyricsTheme = next.ytm.lyricsTheme;
+    defaultLyricsSource = next.ytm.lyricsSource;
+    defaultLyricsMotion = next.ytm.lyricsMotion;
+    const nextMotion = lyricsMotionOverride ?? defaultLyricsMotion;
+    const nextSource = lyricsSourceOverride ?? defaultLyricsSource;
+    const nextTheme = lyricsThemeOverride ?? defaultLyricsTheme;
+    const sourceChanged = nextSource !== lyricsSource;
+    const themeChanged = nextTheme !== lyricsTheme;
+    const motionChanged = nextMotion !== lyricsMotion;
+    lyricsTheme = nextTheme;
+    lyricsSource = nextSource;
+    lyricsMotion = nextMotion;
+    if (shouldEnable === enabled) {
+      if (!enabled) return;
+      if (sourceChanged) reloadLyrics();
+      else render();
+      if (themeChanged || motionChanged) {
+        paintActiveLine(true);
+      }
+      return;
+    }
     enabled = shouldEnable;
     log("setting toggled", shouldEnable);
     if (enabled) start();
@@ -100,6 +142,9 @@ function stop() {
   requestSeq++;
   currentTrack = null;
   lyricsState = { status: "idle" };
+  nativeWaitStartedAt = 0;
+  previousYouTubeLyrics = "";
+  lastSeenNativeLyrics = "";
   playbackTime = 0;
   pageClockUpdatedAt = 0;
   activeIndex = -1;
@@ -228,6 +273,7 @@ function tick() {
   ensureTicker();
   ensureRoot();
   maybeUseYouTubeLyrics();
+  checkNativeLyricsWait();
   bindMediaClock();
   if (!currentTrack) applyTrack(readNowPlaying());
   else if (!currentTrack.artwork) {
@@ -275,19 +321,31 @@ function applyTrack(track) {
   // the new track start from zero until the page-player clock arrives.
   playbackTime = 0;
   pageClockUpdatedAt = performance.now();
-  lyricsState = { status: "loading", track: cleaned };
+  log("track changed", cleaned);
+  reloadLyrics();
+}
+
+function reloadLyrics() {
+  if (!currentTrack) return;
+  lyricsState = { status: "loading", track: currentTrack };
+  nativeWaitStartedAt = 0;
   activeIndex = -1;
+  userScrollingUntil = 0;
   clearLineWake();
   cancelMeter();
-  log("track changed", cleaned);
   render();
   updateTicker();
   syncTimeNeed();
-  void loadLyrics(cleaned);
+  void loadLyrics(currentTrack);
+  maybeUseYouTubeLyrics();
+  checkNativeLyricsWait();
 }
 
 async function loadLyrics(track) {
   const seq = ++requestSeq;
+  // An explicit native source never contacts LRCLIB. Poll the Lyrics tab
+  // instead, since YouTube loads that shelf asynchronously.
+  if (lyricsSource === "youtube") return;
   try {
     const result = await sendMessage({ type: "CTP_FETCH_LYRICS", track });
     if (seq !== requestSeq) return;
@@ -315,21 +373,36 @@ async function loadLyrics(track) {
 
 function maybeUseYouTubeLyrics() {
   if (!currentTrack || !/LYRICS/i.test(getTabPageType())) return;
-  if (lyricsState.status === "found" && lyricsState.synced) return;
 
   const plain = normalizeLyrics(readNativeLyricsText());
   if (plain) lastSeenNativeLyrics = plain;
+  if (lyricsSource === "lrclib") return;
+  if (lyricsSource === "auto" && lyricsState.status === "found" && lyricsState.synced) return;
   if (!plain || plain === previousYouTubeLyrics || plain === lyricsState.plain) return;
   const attribution = readNativeLyricsAttribution();
   const result = youtubeLyricsFromText(plain, attribution);
   if (!result) return;
 
   lyricsState = result;
+  nativeWaitStartedAt = 0;
   activeIndex = -1;
   log("lyrics result", "found", "youtube");
   render();
   updateTicker();
   syncTimeNeed();
+}
+
+function checkNativeLyricsWait() {
+  if (lyricsSource !== "youtube" || lyricsState.status !== "loading" || !currentTrack) return;
+  if (!isLyricsTabActive() || isPlayerFullscreen()) {
+    nativeWaitStartedAt = 0;
+    return;
+  }
+  if (!nativeWaitStartedAt) nativeWaitStartedAt = Date.now();
+  if (Date.now() - nativeWaitStartedAt < 8000) return;
+  lyricsState = { status: "not_found", source: "youtube" };
+  render();
+  updateTicker();
 }
 
 function getNativeLyricsShelf() {
@@ -574,6 +647,10 @@ function ensureRoot() {
     root.id = ROOT_ID;
     root.className = "ctp-lyrics";
     root.hidden = true;
+    root.append(createLyricsControls());
+    const content = document.createElement("div");
+    content.className = "ctp-content";
+    root.append(content);
     host.prepend(root);
     bindRootEvents(root);
     render();
@@ -590,6 +667,31 @@ function teardownUi() {
 }
 
 function bindRootEvents(root) {
+  root.addEventListener("change", (event) => {
+    const input = event.target;
+    if (input.id === "ctp-lyrics-source") {
+      if (input.value !== "default" && !LYRIC_SOURCES.includes(input.value)) return;
+      lyricsSourceOverride = input.value === "default" ? null : input.value;
+      const next = lyricsSourceOverride ?? defaultLyricsSource;
+      if (next !== lyricsSource) {
+        lyricsSource = next;
+        reloadLyrics();
+      }
+    } else if (input.id === "ctp-lyrics-theme") {
+      if (input.value !== "default" && !LYRIC_THEMES.includes(input.value)) return;
+      lyricsThemeOverride = input.value === "default" ? null : input.value;
+      lyricsTheme = lyricsThemeOverride ?? defaultLyricsTheme;
+      render();
+      paintActiveLine(true);
+    } else if (input.id === "ctp-lyrics-motion") {
+      if (input.value !== "default" && !LYRIC_MOTIONS.includes(input.value)) return;
+      lyricsMotionOverride = input.value === "default" ? null : input.value;
+      lyricsMotion = lyricsMotionOverride ?? defaultLyricsMotion;
+      render();
+      paintActiveLine(true);
+    }
+    syncLyricsControls(root);
+  });
   root.addEventListener("click", (event) => {
     const line = event.target.closest("[data-ctp-time]");
     if (!line) return;
@@ -607,6 +709,49 @@ function bindRootEvents(root) {
   root.addEventListener("touchmove", hold, { passive: true });
 }
 
+function createLyricsControls() {
+  const controls = document.createElement("div");
+  controls.className = "ctp-controls";
+  for (const [kind, label, values, labels] of [
+    ["source", "Source", LYRIC_SOURCES, SOURCE_LABELS],
+    ["theme", "Theme", LYRIC_THEMES, THEME_LABELS],
+    ["motion", "Motion", LYRIC_MOTIONS, MOTION_LABELS],
+  ]) {
+    const row = document.createElement("label");
+    row.className = "ctp-control";
+    if (kind === "motion") row.classList.add("ctp-motion-control");
+    const text = document.createElement("span");
+    text.textContent = label;
+    const select = document.createElement("select");
+    select.id = `ctp-lyrics-${kind}`;
+    select.setAttribute("aria-label", `Lyrics ${kind}`);
+    for (const value of ["default", ...values]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = labels[value] || "Use default";
+      select.append(option);
+    }
+    row.append(text, select);
+    controls.append(row);
+  }
+  return controls;
+}
+
+function syncLyricsControls(root) {
+  for (const [kind, defaultValue, override, labels] of [
+    ["source", defaultLyricsSource, lyricsSourceOverride, SOURCE_LABELS],
+    ["theme", defaultLyricsTheme, lyricsThemeOverride, THEME_LABELS],
+    ["motion", defaultLyricsMotion, lyricsMotionOverride, MOTION_LABELS],
+  ]) {
+    const select = root.querySelector(`#ctp-lyrics-${kind}`);
+    if (!select) continue;
+    const label = `Default: ${labels[defaultValue]}`;
+    if (select.options[0].textContent !== label) select.options[0].textContent = label;
+    if (select.value !== (override ?? "default")) select.value = override ?? "default";
+    select.title = "Applies in this tab. Choose Default to follow the extension setting.";
+  }
+}
+
 function seekTo(time) {
   window.postMessage({ type: "CTP_SEEK", time }, "*");
   const video = getPlayerVideo();
@@ -616,6 +761,10 @@ function seekTo(time) {
 function render() {
   const root = document.getElementById(ROOT_ID) || ensureRoot();
   if (!root) return;
+  root.dataset.theme = lyricsTheme;
+  root.dataset.synced = String(Boolean(lyricsState.synced));
+  root.dataset.motion = reducedMotionEnabled() ? "reduced" : "full";
+  syncLyricsControls(root);
   const ad = isAdvertisement();
   if (lastRender?.root === root && lastRender.state === lyricsState &&
       lastRender.key === currentKey && lastRender.ad === ad) return;
@@ -634,7 +783,11 @@ function render() {
   }
 
   if (lyricsState.status === "loading" || lyricsState.status === "idle") {
-    showStatus("Fetching lyrics", `${currentTrack.title} · YouTube Music + LRCLIB`);
+    const source = lyricsSource === "auto" ? "YouTube Music + LRCLIB"
+      : lyricsSource === "youtube" ? "YouTube Music" : "LRCLIB";
+    showStatus(lyricsSource === "youtube" ? "Waiting for YouTube Music" : "Fetching lyrics",
+      lyricsSource === "youtube" ? "Keep the Lyrics tab open to load built-in lyrics."
+        : `${currentTrack.title} · ${source}`);
     return;
   }
 
@@ -644,7 +797,7 @@ function render() {
   }
 
   if (lyricsState.status === "not_found") {
-    showStatus("No lyrics found", "Neither YouTube Music nor LRCLIB has lyrics for this track yet.");
+    showStatus("No lyrics found", missingLyricsDetail());
     return;
   }
 
@@ -655,7 +808,7 @@ function render() {
 
   const lines = lyricsState.lines || [];
   if (!lines.length) {
-    showStatus("No lyrics found", "Neither YouTube Music nor LRCLIB has lyrics for this track yet.");
+    showStatus("No lyrics found", missingLyricsDetail());
     return;
   }
 
@@ -665,14 +818,21 @@ function render() {
       const timeAttr = synced && Number.isFinite(line.time) ? ` data-ctp-time="${line.time}"` : "";
       const stamp = synced ? formatTimestamp(line.time) : "";
       const state = index === activeIndex ? " ctp-line-active" : index < activeIndex ? " ctp-line-past" : "";
-      const text = escapeHtml(line.text);
-      return `<button class="ctp-line${state}" type="button"${timeAttr} data-index="${index}">
+      let wordIndex = 0;
+      const text = String(line.text || "").split(/(\s+)/).map((part) => {
+        if (!part || /^\s+$/.test(part)) return escapeHtml(part);
+        const delay = Math.min(wordIndex++ * 32, 256);
+        return `<span class="ctp-word" style="--ctp-word-delay:${delay}ms">${escapeHtml(part)}</span>`;
+      }).join("");
+      const tag = timeAttr ? "button" : "div";
+      const buttonAttr = timeAttr ? ' type="button"' : "";
+      return `<${tag} class="ctp-line${state}"${buttonAttr}${timeAttr} data-index="${index}">
         <span class="ctp-time">${stamp}</span>
         <span class="ctp-body">
           <span class="ctp-text">${text}</span>
           <span class="ctp-meter" aria-hidden="true"><span class="ctp-meter-fill"></span></span>
         </span>
-      </button>`;
+      </${tag}>`;
     })
     .join("");
 
@@ -680,7 +840,7 @@ function render() {
   const sourceName = lyricsState.source === "youtube" ? "YouTube Music" : "LRCLIB";
   const sourceDetail = lyricsState.provider ? ` · ${lyricsState.provider}` : "";
 
-  root.innerHTML = `
+  root.querySelector(".ctp-content").innerHTML = `
     <div class="ctp-toolbar">
       <div class="ctp-ident">
         <div class="ctp-art" aria-hidden="true"></div>
@@ -706,6 +866,15 @@ function render() {
   });
 
   paintActiveLine(true);
+  onPlayback();
+}
+
+function missingLyricsDetail() {
+  if (lyricsSource === "youtube") {
+    return "YouTube Music has not provided lyrics for this track. Try LRCLIB in the Source menu above.";
+  }
+  if (lyricsSource === "lrclib") return "LRCLIB has no lyrics for this track yet. Try YouTube Music or Automatic in the Source menu above.";
+  return "Neither YouTube Music nor LRCLIB has lyrics for this track yet.";
 }
 
 function paintActiveLine(force = false) {
@@ -733,7 +902,12 @@ function paintActiveLine(force = false) {
   root.classList.remove("ctp-user-scrolling");
   const current = lines[activeIndex];
   if (!current || root.hidden || !isLyricsTabActive()) return;
-  current.scrollIntoView({ block: "center", inline: "nearest", behavior: force ? "auto" : "smooth" });
+  const reducedMotion = reducedMotionEnabled();
+  current.scrollIntoView({ block: "center", inline: "nearest", behavior: force || reducedMotion ? "auto" : "smooth" });
+}
+
+function reducedMotionEnabled() {
+  return lyricsMotion === "reduced" || (lyricsMotion === "system" && motionPreference.matches);
 }
 
 function isLyricsPanelVisible() {
@@ -863,7 +1037,7 @@ function cancelMeter() {
 
 function syncMeter(force = false) {
   const root = document.getElementById(ROOT_ID);
-  if (!root || root.hidden || !lyricsState.synced) {
+  if (!root || root.hidden || !lyricsState.synced || lyricsTheme !== "classic") {
     cancelMeter();
     return;
   }
@@ -963,7 +1137,7 @@ function updateTicker() {
 function showStatus(title, detail) {
   const root = document.getElementById(ROOT_ID);
   if (!root) return;
-  root.innerHTML = statusMarkup(title, detail);
+  root.querySelector(".ctp-content").innerHTML = statusMarkup(title, detail);
   paintAtmosphere();
 }
 

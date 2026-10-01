@@ -18,6 +18,19 @@ const MODE_TITLES = {
 };
 
 const followAlong = document.getElementById("followAlongLyrics");
+const lyricsTheme = document.getElementById("lyricsTheme");
+const lyricsSource = document.getElementById("lyricsSource");
+const lyricsMotion = document.getElementById("lyricsMotion");
+const LYRIC_THEME_HELP = {
+  classic: "Timestamps and a red progress bar.",
+  "oled-bounce": "Pure black with bold lyrics, springy line changes, and a staggered word entrance.",
+  compact: "Smaller text and tighter spacing to show more lyrics at once.",
+};
+const LYRIC_SOURCE_HELP = {
+  auto: "Prefer LRCLIB timing, with built-in YouTube Music lyrics as a fallback.",
+  youtube: "Use only built-in lyrics from the Lyrics tab. Untimed lyrics stay static; no LRCLIB lookup.",
+  lrclib: "Use only LRCLIB lyrics and timestamps when available.",
+};
 const customTheme = document.getElementById("customTheme");
 const editCustomTheme = document.getElementById("editCustomTheme");
 const customSwatches = document.getElementById("customSwatches");
@@ -71,6 +84,13 @@ followAlong.addEventListener("change", async () => {
     },
   });
 });
+
+for (const [input, key] of [[lyricsTheme, "lyricsTheme"], [lyricsSource, "lyricsSource"], [lyricsMotion, "lyricsMotion"]]) {
+  input.addEventListener("change", async () => {
+    const current = await getSettings();
+    await setSettings({ ...current, ytm: { ...current.ytm, [key]: input.value } });
+  });
+}
 
 customTheme.addEventListener("change", async () => {
   await saveYoutubeTheme();
@@ -126,6 +146,13 @@ async function saveYoutubeTheme() {
 
 function renderSettings(next) {
   followAlong.checked = Boolean(next.ytm.followAlongLyrics);
+  lyricsTheme.value = next.ytm.lyricsTheme;
+  lyricsSource.value = next.ytm.lyricsSource;
+  lyricsMotion.value = next.ytm.lyricsMotion;
+  lyricsTheme.disabled = lyricsSource.disabled = !next.ytm.followAlongLyrics;
+  lyricsMotion.disabled = !next.ytm.followAlongLyrics;
+  document.getElementById("lyrics-theme-help").textContent = LYRIC_THEME_HELP[next.ytm.lyricsTheme];
+  document.getElementById("lyrics-source-help").textContent = LYRIC_SOURCE_HELP[next.ytm.lyricsSource];
   customTheme.checked = next.youtube.theme === "custom";
   hideShorts.checked = Boolean(next.youtube.hideShorts);
   hidePlayables.checked = Boolean(next.youtube.hidePlayables);

@@ -84,6 +84,13 @@ h2 { font-size: 12px; font-weight: 680; letter-spacing: -0.1px; }
 .setting-stack .setting { padding: 0; border: 0; }
 .setting-stack + .setting { margin-top: 0; }
 
+.lyrics-options { display: grid; gap: 6px; padding: 0 0 14px; }
+.select-setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.select-setting + .setting-help { margin-bottom: 8px; }
+select { min-width: 150px; max-width: 60%; padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: #202023; color: #edebed; font: inherit; font-size: 11px; cursor: pointer; color-scheme: dark; }
+select:disabled { opacity: 0.45; cursor: default; }
+select:focus-visible { outline: 2px solid #ffaaa4; outline-offset: 3px; }
+
 .ghost-btn { width: 100%; margin-top: 11px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: 9px; background: #202023; color: #e8e5e8; font: inherit; font-size: 11px; font-weight: 650; cursor: pointer; transition: border-color 150ms ease, background 150ms ease, color 150ms ease; }
 .ghost-btn:hover { border-color: rgba(255, 93, 82, 0.35); background: #242326; color: #ff938c; }
 .ghost-btn:active { transform: translateY(1px); }

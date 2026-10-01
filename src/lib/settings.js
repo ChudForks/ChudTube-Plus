@@ -4,6 +4,9 @@ export { DEFAULT_CUSTOM_THEME, mergeCustomTheme } from "./theme.js";
 
 export const YOUTUBE_THEMES = ["default", "custom"];
 export const YTM_THEMES = ["default", "oled-black"];
+export const LYRIC_THEMES = ["classic", "oled-bounce", "compact"];
+export const LYRIC_SOURCES = ["auto", "youtube", "lrclib"];
+export const LYRIC_MOTIONS = ["full", "system", "reduced"];
 export const SPONSOR_SKIP_MODES = ["auto", "button", "off"];
 
 export const SPONSOR_CATEGORIES = [
@@ -76,6 +79,9 @@ export const DEFAULT_SETTINGS = {
   },
   ytm: {
     followAlongLyrics: true,
+    lyricsTheme: "classic",
+    lyricsSource: "auto",
+    lyricsMotion: "full",
     theme: "oled-black",
   },
   youtube: {
@@ -102,6 +108,7 @@ export function sponsorCategoryModes(settings) {
 
 export function mergeSettings(stored) {
   const incoming = stored && typeof stored === "object" ? stored : {};
+  const lyricsTheme = incoming.ytm?.lyricsTheme === "ytm" ? "oled-bounce" : incoming.ytm?.lyricsTheme;
   const theme = incoming.youtube?.theme;
   const migratedOledTheme = theme === "oled-black";
   const incomingCustomTheme = incoming.youtube?.customTheme;
@@ -118,6 +125,15 @@ export function mergeSettings(stored) {
     ytm: {
       followAlongLyrics:
         incoming.ytm?.followAlongLyrics ?? DEFAULT_SETTINGS.ytm.followAlongLyrics,
+      lyricsTheme: LYRIC_THEMES.includes(lyricsTheme)
+        ? lyricsTheme
+        : DEFAULT_SETTINGS.ytm.lyricsTheme,
+      lyricsSource: LYRIC_SOURCES.includes(incoming.ytm?.lyricsSource)
+        ? incoming.ytm.lyricsSource
+        : DEFAULT_SETTINGS.ytm.lyricsSource,
+      lyricsMotion: LYRIC_MOTIONS.includes(incoming.ytm?.lyricsMotion)
+        ? incoming.ytm.lyricsMotion
+        : DEFAULT_SETTINGS.ytm.lyricsMotion,
       theme: YTM_THEMES.includes(incoming.ytm?.theme)
         ? incoming.ytm.theme
         : DEFAULT_SETTINGS.ytm.theme,

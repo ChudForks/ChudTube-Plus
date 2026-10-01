@@ -32,6 +32,18 @@ try {
   await page.waitForSelector('input[name="sponsorBlock-sponsor"][value="off"]');
   assert.equal(await page.$('#oledBlack'),null);
   assert.equal(await page.$eval('#followAlongLyrics',e=>e.checked),true);
+  assert.equal(await page.$eval('#lyricsTheme',e=>e.value),'classic');
+  assert.equal(await page.$eval('#lyricsSource',e=>e.value),'auto');
+  assert.equal(await page.$eval('#lyricsMotion',e=>e.value),'full');
+  await page.select('#lyricsMotion','system');
+  await page.waitForFunction(()=>window.saved.ytm.lyricsMotion==='system');
+  await page.select('#lyricsTheme','oled-bounce');
+  await page.waitForFunction(()=>window.saved.ytm.lyricsTheme==='oled-bounce');
+  await page.select('#lyricsSource','youtube');
+  await page.waitForFunction(()=>window.saved.ytm.lyricsSource==='youtube');
+  assert.match(await page.$eval('#lyrics-source-help',e=>e.textContent),/no LRCLIB lookup/);
+  assert.equal(await page.evaluate(()=>window.saved.ytm.lyricsTheme),'oled-bounce');
+  assert.equal(await page.evaluate(()=>window.saved.ytm.lyricsMotion),'system');
   assert.equal(await page.$eval('input[name="sponsorBlock-sponsor"][value="button"]',e=>e.checked),true);
   await page.click('#customTheme');
   await page.waitForFunction(()=>window.saved.youtube.theme==='default');
@@ -63,8 +75,15 @@ try {
   await page.focus('#followAlongLyrics');
   await page.keyboard.press('Space');
   await page.waitForFunction(()=>window.saved.ytm.followAlongLyrics===false);
+  assert.equal(await page.$eval('#lyricsTheme',e=>e.disabled),true);
+  assert.equal(await page.$eval('#lyricsSource',e=>e.disabled),true);
+  assert.equal(await page.$eval('#lyricsMotion',e=>e.disabled),true);
   await page.keyboard.press('Space');
   await page.waitForFunction(()=>window.saved.ytm.followAlongLyrics===true);
+  assert.equal(await page.$eval('#lyricsTheme',e=>e.disabled),false);
+  assert.equal(await page.$eval('#lyricsSource',e=>e.disabled),false);
+  assert.equal(await page.evaluate(()=>window.saved.ytm.lyricsSource),'youtube');
+  assert.equal(await page.evaluate(()=>window.saved.ytm.lyricsTheme),'oled-bounce');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=388),true);
   assert.equal(await page.$eval('.logo',e=>e.complete && e.naturalWidth===128),true);
   assert.deepEqual(errors,[]);
@@ -73,4 +92,4 @@ try {
   await page.setViewport({width:388,height,deviceScaleFactor:2});
   await page.screenshot({path:'scripts/popup-premium.png'});
 } finally { await browser.close(); }
-console.log('PASS: initial settings, click persistence, keyboard toggle, independent settings, content filters, SponsorBlock modes, icon load, layout, no JS errors.');
+console.log('PASS: initial settings, lyrics theme/source defaults, click persistence, keyboard toggle, independent settings, content filters, SponsorBlock modes, icon load, layout, no JS errors.');
