@@ -535,6 +535,13 @@ ytmusic-player-bar .middle-controls {
   transition: color 360ms ease, transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Keep the spring on a separate element so removing it cannot cancel the
+   text's scale transition and snap the outgoing, still-bright lyric. */
+.ctp-lyrics[data-theme="oled-bounce"] .ctp-body {
+  display: block;
+  transform-origin: left center;
+}
+
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-word {
   display: inline-block;
   max-width: 100%;
@@ -543,6 +550,9 @@ ytmusic-player-bar .middle-controls {
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-line-past .ctp-text {
   color: rgba(255, 255, 255, 0.22);
+  /* Dim before follow scrolling moves the outgoing line. A color fade leaves
+     the previous lyric bright in its new position for several frames. */
+  transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-line-next .ctp-text {
@@ -556,6 +566,9 @@ ytmusic-player-bar .middle-controls {
 .ctp-lyrics[data-theme="oled-bounce"] .ctp-line-active .ctp-text {
   color: #fff;
   transform: scale(1);
+}
+
+.ctp-lyrics[data-theme="oled-bounce"] .ctp-line-active .ctp-body {
   animation: ctp-lyric-bounce 720ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
@@ -564,7 +577,7 @@ ytmusic-player-bar .middle-controls {
   animation-delay: var(--ctp-word-delay, 0ms);
 }
 
-.ctp-lyrics[data-theme="oled-bounce"] .ctp-line[data-ctp-time]:not(.ctp-line-active):hover .ctp-text {
+.ctp-lyrics[data-theme="oled-bounce"] .ctp-line[data-ctp-time]:not(.ctp-line-active):not(.ctp-line-past):hover .ctp-text {
   color: rgba(255, 255, 255, 0.78);
 }
 
