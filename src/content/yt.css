@@ -167,6 +167,11 @@ html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextSegmentedStart, .yt-spec
   background: var(--ctp-theme-outline) !important;
 }
 
+/* The divider sits over the like button's inset selection outline. */
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextSegmentedStart, .yt-spec-button-shape-next--segmented-start)[aria-pressed="true"]::after {
+  background: var(--ctp-theme-accent) !important;
+}
+
 html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono, .ytSpecButtonShapeNextCallToAction, .yt-spec-button-shape-next--call-to-action, .ytChipShapeChip, ytd-masthead button):focus-visible {
   outline: 2px solid var(--ctp-theme-accent) !important;
   outline-offset: 2px;
