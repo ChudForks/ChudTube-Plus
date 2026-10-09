@@ -1,7 +1,7 @@
 import { fetchLyrics } from "./lib/lrclib.js";
 import { SPONSOR_CATEGORIES, mergeSettings } from "./lib/settings.js";
 
-const CACHE_PREFIX = "ctp-lyrics:";
+const CACHE_PREFIX = "ctp-lyrics:v2:";
 const SPONSOR_CACHE_PREFIX = "ctp-sponsorblock:v2:";
 const FOUND_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MISS_TTL_MS = 30 * 60 * 1000;
@@ -23,19 +23,14 @@ const MUSIC_TAB_URLS = [
 
 chrome.runtime.onInstalled.addListener(() => {
   console.info("[ChudTube+] service worker ready");
-  injectThemeIntoOpenTabs();
+  applyThemeToYoutubeTabs();
   applyThemeToMusicTabs();
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  injectThemeIntoOpenTabs();
+  applyThemeToYoutubeTabs();
   applyThemeToMusicTabs();
 });
-
-async function injectThemeIntoOpenTabs() {
-  const stored = await chrome.storage.sync.get("settings");
-  await applyThemeToYoutubeTabs(mergeSettings(stored.settings).youtube);
-}
 
 async function applyThemeToMusicTabs(theme) {
   if (theme === undefined) {
@@ -72,10 +67,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "sync" || !changes.settings) return;
   const settings = mergeSettings(changes.settings.newValue);
   applyThemeToMusicTabs(settings.ytm.theme);
-  applyThemeToYoutubeTabs(settings.youtube);
 });
 
-async function applyThemeToYoutubeTabs(youtube) {
+async function applyThemeToYoutubeTabs() {
   let tabs = [];
   try {
     tabs = await chrome.tabs.query({ url: THEME_TAB_URLS });
@@ -91,16 +85,8 @@ async function applyThemeToYoutubeTabs(youtube) {
         target: { tabId: tab.id },
         files: ["src/content/yt.css"],
       });
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: paintYoutubeTheme,
-        args: [
-          youtube?.theme || "oled-black",
-          youtube?.customTheme || null,
-          Boolean(youtube?.hideShorts),
-          Boolean(youtube?.hidePlayables),
-        ],
-      });
+      // Let the boot script capture native styles before it paints. Loaded
+      // controllers receive subsequent settings changes through storage.
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         files: ["src/content/yt-boot.js"],
@@ -108,70 +94,6 @@ async function applyThemeToYoutubeTabs(youtube) {
     } catch (error) {
       console.warn("[ChudTube+] youtube theme apply failed", tab.id, error);
     }
-  }
-}
-
-function paintYoutubeTheme(theme, customTheme, hideShorts, hidePlayables) {
-  const root = document.documentElement;
-  root.toggleAttribute("data-ctp-hide-shorts", Boolean(hideShorts));
-  root.toggleAttribute("data-ctp-hide-playables", Boolean(hidePlayables));
-
-  const styleNames = [
-    "background",
-    "background-color",
-    "color",
-    "color-scheme",
-    "--yt-spec-base-background",
-    "--yt-spec-raised-background",
-    "--yt-sys-color-baseline--base-background",
-    "--ctp-custom-background",
-    "--ctp-custom-surface",
-    "--ctp-custom-text",
-    "--ctp-custom-muted",
-    "--ctp-custom-accent",
-    "--ctp-custom-hover",
-    "--ctp-custom-outline",
-    "--ctp-custom-scheme",
-  ];
-
-  if (theme !== "oled-black" && theme !== "custom") {
-    root.removeAttribute("data-ctp-theme");
-    for (const name of styleNames) root.style.removeProperty(name);
-    return;
-  }
-
-  const colors = customTheme && typeof customTheme === "object" ? customTheme : {};
-  const background = theme === "custom" && typeof colors.background === "string" ? colors.background : "#000";
-  const surface = theme === "custom" && typeof colors.surface === "string" ? colors.surface : background;
-  const text = theme === "custom" && typeof colors.text === "string" ? colors.text : "";
-  root.setAttribute("data-ctp-theme", theme);
-  if (theme === "oled-black") {
-    root.setAttribute("dark", "");
-    root.setAttribute("darker-dark-theme", "");
-  }
-  root.style.setProperty("background", background, "important");
-  root.style.setProperty("background-color", background, "important");
-  root.style.setProperty("--yt-spec-base-background", background, "important");
-  root.style.setProperty("--yt-spec-raised-background", surface, "important");
-  root.style.setProperty("--yt-sys-color-baseline--base-background", background, "important");
-  if (theme === "custom") {
-    root.style.setProperty("--ctp-custom-background", colors.background || background);
-    root.style.setProperty("--ctp-custom-surface", colors.surface || surface);
-    root.style.setProperty("--ctp-custom-text", colors.text || "#f4f1ef");
-    root.style.setProperty("--ctp-custom-muted", colors.muted || "#b4aeb8");
-    root.style.setProperty("--ctp-custom-accent", colors.accent || "#ff695b");
-    root.style.setProperty("--ctp-custom-hover", colors.hover || "#2b2338");
-    root.style.setProperty("--ctp-custom-outline", colors.outline || "#3d344c");
-    if (text) root.style.setProperty("color", text, "important");
-  } else {
-    root.style.removeProperty("color");
-    root.style.removeProperty("--ctp-custom-background");
-    root.style.removeProperty("--ctp-custom-surface");
-    root.style.removeProperty("--ctp-custom-text");
-    root.style.removeProperty("--ctp-custom-muted");
-    root.style.removeProperty("--ctp-custom-accent");
-    root.style.removeProperty("--ctp-custom-hover");
-    root.style.removeProperty("--ctp-custom-outline");
   }
 }
 
@@ -328,8 +250,9 @@ async function handleFetch(track) {
 function cacheKey(track) {
   const title = (track?.title || "").trim().toLowerCase();
   const artist = (track?.artist || "").trim().toLowerCase();
+  const album = (track?.album || "").trim().toLowerCase();
   const duration = Number.isFinite(track?.duration) ? Math.round(track.duration) : "";
-  return `${CACHE_PREFIX}${artist}::${title}::${duration}`;
+  return `${CACHE_PREFIX}${JSON.stringify([artist, title, album, duration])}`;
 }
 
 async function readCache(key) {

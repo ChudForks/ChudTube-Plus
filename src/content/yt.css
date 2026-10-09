@@ -122,6 +122,115 @@ html[data-ctp-theme="custom"] [dark] {
   --yt-live-chat-secondary-text-color: var(--ctp-theme-muted) !important;
 }
 
+/* Modern buttons and masthead icons also carry generated or literal colors.
+   Theme the UI variants; overlay variants keep their contrast over video. */
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono),
+html[data-ctp-theme="custom"] ytd-masthead :is(button, yt-icon-button) {
+  color: var(--ctp-theme-text) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono, ytd-masthead) :is(yt-icon, .ytIconWrapperHost, .ytSpecIconBadgeShapeHost, .ytSpecIconBadgeShapeIcon) {
+  color: inherit !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono.ytSpecButtonShapeNextTonal, .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--tonal) {
+  background: var(--ctp-theme-surface) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono.ytSpecButtonShapeNextOutline, .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--outline) {
+  border-color: var(--ctp-theme-outline) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono):is(:hover, :active):not([disabled]):not([aria-disabled="true"]),
+html[data-ctp-theme="custom"] ytd-masthead :is(yt-icon-button, ytd-notification-topbar-button-renderer):hover {
+  background: var(--ctp-theme-hover) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono.ytSpecButtonShapeNextFilled, .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--filled, .ytSpecButtonShapeNextCallToAction.ytSpecButtonShapeNextFilled, .yt-spec-button-shape-next--call-to-action.yt-spec-button-shape-next--filled) {
+  background: var(--ctp-theme-accent) !important;
+  color: var(--ctp-theme-on-accent, #fff) !important;
+}
+
+/* A selected reaction stays distinguishable from the unselected pair. */
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono)[aria-pressed="true"] {
+  background: var(--ctp-theme-hover) !important;
+  box-shadow: inset 0 0 0 1px var(--ctp-theme-accent);
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono):is([disabled], [aria-disabled="true"], .ytSpecButtonShapeNextDisabled, .yt-spec-button-shape-next--disabled) {
+  color: var(--ctp-theme-muted) !important;
+  background: var(--ctp-theme-surface) !important;
+  box-shadow: none;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextSegmentedStart, .yt-spec-button-shape-next--segmented-start)::after {
+  background: var(--ctp-theme-outline) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono, .ytSpecButtonShapeNextCallToAction, .yt-spec-button-shape-next--call-to-action, .ytChipShapeChip, ytd-masthead button):focus-visible {
+  outline: 2px solid var(--ctp-theme-accent) !important;
+  outline-offset: 2px;
+}
+
+/* Lottie paints neutral glyphs with literal black/white SVG attributes.
+   Override only those paints, preserving masks, opacity and colored effects. */
+html[data-ctp-theme="custom"] :is(yt-animated-icon[animated-icon-type="LIKE"], yt-animated-icon[animated-icon-type="DISLIKE"], yt-animated-icon[animated-icon-type="NOTIFICATION_BELL"]) :is([fill="rgb(255,255,255)"], [fill="rgb(255, 255, 255)"], [fill="#fff" i], [fill="#ffffff" i], [fill="white" i], [fill="rgb(0,0,0)"], [fill="rgb(0, 0, 0)"], [fill="#000"], [fill="#000000"], [fill="black" i]) {
+  fill: currentColor !important;
+}
+
+html[data-ctp-theme="custom"] :is(yt-animated-icon[animated-icon-type="LIKE"], yt-animated-icon[animated-icon-type="DISLIKE"], yt-animated-icon[animated-icon-type="NOTIFICATION_BELL"]) :is([stroke="rgb(255,255,255)"], [stroke="rgb(255, 255, 255)"], [stroke="#fff" i], [stroke="#ffffff" i], [stroke="white" i], [stroke="rgb(0,0,0)"], [stroke="rgb(0, 0, 0)"], [stroke="#000"], [stroke="#000000"], [stroke="black" i]) {
+  stroke: currentColor !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSearchboxComponentInput, .ytSearchboxComponentSearchButton, .ytSearchboxComponentInputBox, .ytSearchboxComponentSuggestionsContainer) {
+  color: var(--ctp-theme-text) !important;
+}
+
+html[data-ctp-theme="custom"] .ytSearchboxComponentInput {
+  caret-color: var(--ctp-theme-accent);
+}
+
+html[data-ctp-theme="custom"] .ytSearchboxComponentInput::placeholder {
+  color: var(--ctp-theme-muted);
+  opacity: 1;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSearchboxComponentInputBox, .ytSearchboxComponentSearchButton, .ytSearchboxComponentInputContainerIsFocused) {
+  border-color: var(--ctp-theme-outline) !important;
+  box-shadow: none !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSearchboxComponentInputBoxHasFocus, .ytSearchboxComponentInputContainerIsFocused) {
+  border-color: var(--ctp-theme-accent) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSearchboxComponentInputWrapperIsFocused, .ytSearchboxComponentInputContainerIsFocused) {
+  background: var(--ctp-theme-surface) !important;
+}
+
+html[data-ctp-theme="custom"] .ytSearchboxComponentSearchButton:hover {
+  background: var(--ctp-theme-hover) !important;
+}
+
+html[data-ctp-theme="custom"] .ytChipShapeInactive {
+  color: var(--ctp-theme-text) !important;
+}
+
+html[data-ctp-theme="custom"] .ytChipShapeInactive:hover {
+  background: var(--ctp-theme-surface) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytChipShapeActive, .ytChipShapeActiveRedesign) {
+  background: var(--ctp-theme-text) !important;
+  color: var(--ctp-theme-bg) !important;
+}
+
+/* Description prose arrives with inline white spans even in a light theme.
+   Link spans have a separate class and retain their accent color. */
+html[data-ctp-theme="custom"] ytd-watch-metadata :is(#description-inline-expander, #description-inline-expander .ytAttributedStringLinkInheritColor) {
+  color: var(--ctp-theme-text) !important;
+}
+
 /* YouTube's brand mark and watch progress UI use literal red fills rather
    than the public theme tokens above. Keep the wordmark and play glyph
    legible, while letting a custom theme own the red logo container, the

@@ -1,0 +1,398 @@
+#tab-renderer.ctp-lyrics-visible > :not(#ctp-lyrics-root),
+ytmusic-tab-renderer.ctp-lyrics-visible > :not(#ctp-lyrics-root) {
+  display: none !important;
+}
+
+/* Keep the persistent playback surface truly black without changing the rest
+   of YouTube Music's intentionally layered dark UI. Custom properties cross
+   the player bar's component boundary, covering both current and legacy DOM. */
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar {
+  --ytmusic-player-bar-background: #000 !important;
+  --ytmusic-player-bar-background-color: #000 !important;
+  --ytmusic-generic-background-a: #000 !important;
+  --ytmusic-color-black1: #000 !important;
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar #player-bar-background,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar .background,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar .background-overlay,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar #right-controls,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar .right-controls,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar #right-content,
+html[data-ctp-ytm-theme="oled-black"] ytmusic-player-bar .right-content {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
+html[data-ctp-ytm-theme] .ctp-sponsorblock-markers {
+  z-index: 42 !important;
+}
+
+html[data-ctp-ytm-theme] .ctp-sponsorblock-marker {
+  background-color: var(--ctp-sb-color) !important;
+  background-image: none !important;
+}
+
+/* In expanded-player mode this is a sibling of ytmusic-player-bar, not a
+   descendant. It fills the scrollbar-width end cap seen at the right edge. */
+html[data-ctp-ytm-theme="oled-black"] ytmusic-app-layout[player-ui-state="PLAYER_PAGE_OPEN"] #player-bar-background,
+html[data-ctp-ytm-theme="oled-black"] #layout[player-ui-state="PLAYER_PAGE_OPEN"] #player-bar-background {
+  background: #000 !important;
+  background-color: #000 !important;
+}
+
+/* Lyrics stay in the player-page side panel. Do not raise z-index: YTM video
+   fullscreen keeps the panel in the tree and a stacking context overlays the film. */
+#tab-renderer.ctp-lyrics-visible,
+ytmusic-tab-renderer.ctp-lyrics-visible {
+  background: #000 !important;
+  color: #fff;
+}
+
+#ctp-boot-status {
+  position: fixed;
+  left: 16px;
+  bottom: 92px;
+  z-index: 2147483647;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #17171c;
+  color: #fff;
+  font: 12px/1.4 "Segoe UI", sans-serif;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+#ctp-boot-status[data-error="1"] {
+  background: #ff3b4e;
+}
+
+ytmusic-player-bar .middle-controls {
+  position: relative;
+}
+
+#ctp-player-ticker {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  max-width: min(52vw, 640px);
+  padding: 7px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(12, 12, 16, 0.72);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  z-index: 4;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+#ctp-lyrics-root,
+.ctp-lyrics {
+  --ctp-red: #ff0000;
+  --ctp-red-soft: rgba(255, 0, 0, 0.16);
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  padding: 0 8px 32px;
+  overflow-x: hidden;
+  background: #000;
+  color: #f1f1f1;
+  font-family: "YouTube Sans", "Google Sans", "Segoe UI Variable", "Segoe UI", sans-serif;
+}
+
+#ctp-lyrics-root *,
+#ctp-lyrics-root *::before,
+#ctp-lyrics-root *::after,
+.ctp-lyrics *,
+.ctp-lyrics *::before,
+.ctp-lyrics *::after {
+  box-sizing: border-box;
+}
+
+/* Author `display: flex` otherwise overrides the UA [hidden] rule. */
+#ctp-lyrics-root[hidden],
+.ctp-lyrics[hidden] {
+  display: none !important;
+}
+
+.ctp-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px 16px 16px;
+  background: linear-gradient(180deg, #000 55%, rgba(0, 0, 0, 0));
+}
+
+.ctp-ident {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ctp-track {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.ctp-art {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3a3a44, #1a1a20) var(--ctp-art, none) center / cover no-repeat;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.ctp-song {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ctp-artist {
+  margin-top: 2px;
+  color: rgba(241, 241, 241, 0.58);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ctp-badge {
+  flex: none;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(241, 241, 241, 0.72);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ctp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 8vh 8px 18vh;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 7%, #000 90%, transparent 100%);
+}
+
+.ctp-line {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 10px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 280ms ease,
+    opacity 280ms ease,
+    filter 280ms ease;
+}
+
+.ctp-line:hover {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.ctp-time {
+  padding-top: 7px;
+  color: rgba(241, 241, 241, 0.28);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.ctp-body {
+  min-width: 0;
+}
+
+.ctp-text {
+  display: block;
+  color: rgba(241, 241, 241, 0.28);
+  font-size: 24px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+  line-height: 1.3;
+  white-space: pre-wrap;
+}
+
+.ctp-meter {
+  display: block;
+  width: 100%;
+  height: 2px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  transform: scaleX(0.96);
+  transform-origin: left center;
+  transition: none;
+}
+
+.ctp-meter-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ctp-red);
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.45);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.ctp-line-past {
+  opacity: 0.55;
+}
+
+.ctp-line-past .ctp-text {
+  color: rgba(241, 241, 241, 0.5);
+}
+
+.ctp-line-next .ctp-text {
+  color: rgba(241, 241, 241, 0.42);
+}
+
+.ctp-line-soon .ctp-text {
+  color: rgba(241, 241, 241, 0.32);
+}
+
+.ctp-line-active {
+  background: linear-gradient(90deg, var(--ctp-red-soft), rgba(255, 0, 0, 0.04) 42%, transparent);
+  box-shadow: inset 2px 0 0 var(--ctp-red);
+  opacity: 1;
+}
+
+.ctp-line-active .ctp-time {
+  color: var(--ctp-red);
+}
+
+.ctp-line-active .ctp-text {
+  color: #fff;
+}
+
+.ctp-line-active .ctp-meter {
+  opacity: 1;
+  transform: none;
+}
+
+.ctp-footer {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 8px;
+  color: rgba(241, 241, 241, 0.38);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  background: linear-gradient(0deg, #000, transparent);
+}
+
+.ctp-follow {
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.ctp-status {
+  display: grid;
+  place-items: center;
+  min-height: 52vh;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 8px;
+}
+
+.ctp-status-kicker {
+  color: var(--ctp-red);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.ctp-status-title {
+  font-size: 28px;
+  font-weight: 750;
+  letter-spacing: -0.04em;
+}
+
+.ctp-status-detail {
+  max-width: 34ch;
+  color: rgba(241, 241, 241, 0.58);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+ytmusic-player-page .tab-header.ctp-lyrics-tab[disabled],
+ytmusic-player-page tp-yt-paper-tab.ctp-lyrics-tab[disabled] {
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+
+html.ctp-video-fs #ctp-player-ticker,
+html.ctp-video-fs #ctp-lyrics-root,
+html.ctp-video-fs #tab-renderer.ctp-lyrics-visible,
+ytmusic-app-layout[player-fullscreened] #ctp-player-ticker,
+ytmusic-app-layout[player-fullscreened] #ctp-lyrics-root,
+ytmusic-app-layout[player-fullscreened] #tab-renderer.ctp-lyrics-visible,
+ytmusic-app-layout[player-ui-state="FULLSCREEN"] #ctp-player-ticker,
+ytmusic-app-layout[player-ui-state="FULLSCREEN"] #ctp-lyrics-root,
+ytmusic-player-page[player-fullscreened] #ctp-lyrics-root,
+ytmusic-player-bar[player-fullscreened] #ctp-player-ticker,
+ytmusic-player-bar[player-fullscreened_] #ctp-player-ticker,
+:fullscreen #ctp-player-ticker,
+:fullscreen #ctp-lyrics-root {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  .ctp-text {
+    font-size: 22px;
+  }
+}

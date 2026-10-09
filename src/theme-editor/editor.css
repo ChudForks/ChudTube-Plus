@@ -233,7 +233,7 @@ input[type="color"]::-webkit-color-swatch { border: none; border-radius: 4px; }
   border: 0;
   border-radius: 18px;
   background: var(--preview-accent);
-  color: var(--preview-bg);
+  color: var(--ctp-theme-on-accent, #fff);
   font: inherit;
   font-size: 12px;
   font-weight: 700;

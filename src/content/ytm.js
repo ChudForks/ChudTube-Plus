@@ -19,6 +19,7 @@ let nativeWaitStartedAt = 0;
 let started = false;
 let currentKey = "";
 let currentTrack = null;
+let currentDomTrackKey = "";
 let lyricsState = { status: "idle" };
 let requestSeq = 0;
 let activeIndex = -1;
@@ -31,6 +32,14 @@ let visibilityLock = null;
 let showLyricsTimer = 0;
 let observers = [];
 let tabsObserver = null;
+let nativeLyricsObserver = null;
+let nativeLyricsRevision = 0;
+let lastSeenNativeRevision = 0;
+let previousNativeRevision = 0;
+let lastSeenNativeDescription = null;
+let previousNativeDescription = null;
+let lyricsTabIdentity = null;
+const nativeTabOverrides = new Map();
 let pollId = 0;
 let highResWanted = false;
 let timeNeedEnabled = false;
@@ -110,6 +119,9 @@ function stop() {
   observers.forEach((obs) => obs.disconnect());
   observers = [];
   tabsObserver = null;
+  nativeLyricsObserver = null;
+  restoreLyricsTabs();
+  lyricsTabIdentity = null;
   document.removeEventListener("iron-select", onIronSelect, true);
   document.removeEventListener("fullscreenchange", onFullscreenChange);
   document.removeEventListener("visibilitychange", onVisibilityChange);
@@ -126,10 +138,13 @@ function stop() {
   currentKey = "";
   requestSeq++;
   currentTrack = null;
+  currentDomTrackKey = "";
   lyricsState = { status: "idle" };
   nativeWaitStartedAt = 0;
   previousYouTubeLyrics = "";
   lastSeenNativeLyrics = "";
+  lastSeenNativeDescription = previousNativeDescription = null;
+  nativeLyricsRevision = lastSeenNativeRevision = previousNativeRevision = 0;
   playbackTime = 0;
   pageClockUpdatedAt = 0;
   activeIndex = -1;
@@ -223,7 +238,32 @@ function bindObservers() {
 
   tabsObserver = new MutationObserver(schedule);
   observers.push(tabsObserver);
+  nativeLyricsObserver = new MutationObserver((mutations) => {
+    if (mutations.some(isNativeLyricsMutation)) nativeLyricsRevision++;
+    schedule(mutations);
+  });
+  observers.push(nativeLyricsObserver);
   watchPlayerTabs();
+  watchNativeLyrics();
+}
+
+function watchNativeLyrics() {
+  const host = getTabRenderer();
+  if (!nativeLyricsObserver || nativeLyricsObserver._ctpTarget === host) return;
+  nativeLyricsObserver.disconnect();
+  nativeLyricsObserver._ctpTarget = host;
+  if (host) nativeLyricsObserver.observe(host, { subtree: true, childList: true, characterData: true });
+}
+
+function isNativeLyricsMutation(mutation) {
+  const el = mutation.target.nodeType === 1 ? mutation.target : mutation.target.parentElement;
+  const shelf = el?.closest?.("ytmusic-description-shelf-renderer, ytmusic-lyrics-description-shelf-renderer");
+  const description = shelf && getNativeLyricsDescription(shelf);
+  if (description && (el === description || description.contains(el))) return true;
+  return [...(mutation.addedNodes || []), ...(mutation.removedNodes || [])].some((node) =>
+    node.nodeType === 1 && (node.matches("ytmusic-description-shelf-renderer, ytmusic-lyrics-description-shelf-renderer, #description, .description") ||
+      node.querySelector("ytmusic-description-shelf-renderer, ytmusic-lyrics-description-shelf-renderer"))
+  );
 }
 
 function mutationsFromOwnUi(mutations) {
@@ -254,6 +294,7 @@ function tick() {
   if (!enabled) return;
   syncFullscreenState();
   watchPlayerTabs();
+  watchNativeLyrics();
   enableLyricsTab();
   ensureTicker();
   ensureRoot();
@@ -273,9 +314,12 @@ function tick() {
 
 function applyTrack(track) {
   if (!track?.title || !track.artist) return;
+  const title = cleanTitle(track.title);
+  if (!title) return;
+  currentDomTrackKey = domTrackKey(readNowPlaying());
   const cleaned = {
     videoId: track.videoId || "",
-    title: track.title,
+    title,
     artist: String(track.artist).split(/\s*[•·]\s*/)[0].trim(),
     album: track.album || "",
     duration: Number(track.duration) || readNowPlaying()?.duration || null,
@@ -289,17 +333,29 @@ function applyTrack(track) {
   );
   const key = trackKey(cleaned);
   if (!key || sameTrack) {
-    currentTrack = currentTrack || cleaned;
-    // Enrich the DOM fallback without restarting its in-flight lyrics request.
-    if (!currentTrack.videoId) currentTrack.videoId = cleaned.videoId;
-    if (cleaned.artwork && currentTrack.artwork !== cleaned.artwork) {
-      currentTrack.artwork = cleaned.artwork;
+    const oldTrack = currentTrack;
+    const changed = oldTrack && (oldTrack.title !== cleaned.title || oldTrack.artist !== cleaned.artist);
+    const albumChanged = oldTrack && oldTrack.album !== cleaned.album;
+    currentTrack = { ...cleaned, videoId: cleaned.videoId || oldTrack?.videoId || "",
+      artwork: cleaned.artwork || oldTrack?.artwork || "" };
+    if (changed || (albumChanged && lyricsState.source !== "youtube")) {
+      currentKey = trackKey(currentTrack);
+      reloadLyrics();
+    } else {
+      // Metadata enrichment preserves the current lyric nodes and playback clock.
+      if (albumChanged && oldTrack.album && cleaned.album) void loadLyrics(currentTrack);
+      const song = document.querySelector("#ctp-lyrics-root .ctp-song");
+      const artist = document.querySelector("#ctp-lyrics-root .ctp-artist");
+      if (song) song.textContent = currentTrack.title;
+      if (artist) artist.textContent = [currentTrack.artist, currentTrack.album].filter(Boolean).join(" · ");
       paintAtmosphere();
     }
     return;
   }
   currentKey = key;
   previousYouTubeLyrics = lastSeenNativeLyrics;
+  previousNativeRevision = lastSeenNativeRevision;
+  previousNativeDescription = lastSeenNativeDescription;
   currentTrack = cleaned;
   // YouTube reuses its media element between autoplayed tracks. Its raw
   // currentTime can briefly remain at the previous song's duration, so make
@@ -360,7 +416,20 @@ function maybeUseYouTubeLyrics() {
   if (!currentTrack || !/LYRICS/i.test(getTabPageType())) return;
 
   const plain = normalizeLyrics(readNativeLyricsText());
-  if (plain) lastSeenNativeLyrics = plain;
+  const description = getNativeLyricsDescription();
+  const domTrack = readNowPlaying();
+  const matchesTrack = !domTrack || domTrackKey(domTrack) === domTrackKey(currentTrack) || domTrackKey(domTrack) === currentDomTrackKey;
+  // Remember outgoing native text even when synced LRCLIB is preferred. A bar
+  // already showing the next song must not bind its fresh shelf to this song.
+  if (matchesTrack && plain && plain !== lastSeenNativeLyrics) {
+    lastSeenNativeLyrics = plain;
+    lastSeenNativeRevision = nativeLyricsRevision;
+    lastSeenNativeDescription = description;
+  }
+  if (!matchesTrack) return;
+  if (!plain || description !== previousNativeDescription || nativeLyricsRevision > previousNativeRevision) {
+    previousYouTubeLyrics = "";
+  }
   if (lyricsSource === "lrclib") return;
   if (lyricsSource === "auto" && lyricsState.status === "found" && lyricsState.synced) return;
   if (!plain || plain === previousYouTubeLyrics || plain === lyricsState.plain) return;
@@ -368,6 +437,9 @@ function maybeUseYouTubeLyrics() {
   const result = youtubeLyricsFromText(plain, attribution);
   if (!result) return;
 
+  lastSeenNativeLyrics = plain;
+  lastSeenNativeRevision = nativeLyricsRevision;
+  lastSeenNativeDescription = description;
   lyricsState = result;
   nativeWaitStartedAt = 0;
   activeIndex = -1;
@@ -375,6 +447,10 @@ function maybeUseYouTubeLyrics() {
   render();
   updateTicker();
   syncTimeNeed();
+}
+
+function domTrackKey(track) {
+  return JSON.stringify([cleanTitle(track?.title).toLowerCase(), String(track?.artist || "").toLowerCase()]);
 }
 
 function checkNativeLyricsWait() {
@@ -400,15 +476,18 @@ function getNativeLyricsShelf() {
 }
 
 function readNativeLyricsText() {
-  const shelf = getNativeLyricsShelf();
-  if (!shelf) return "";
-  const description =
+  return formattedText(getNativeLyricsDescription());
+}
+
+function getNativeLyricsDescription(shelf = getNativeLyricsShelf()) {
+  if (!shelf) return null;
+  return (
     shelf.querySelector("#description") ||
     shelf.querySelector(".description") ||
     [...shelf.querySelectorAll("yt-formatted-string")].find(
       (el) => !/^\s*source\s*:/i.test(el.textContent || "")
-    );
-  return formattedText(description);
+    )
+  );
 }
 
 function readNativeLyricsAttribution() {
@@ -461,21 +540,59 @@ function onPlayback() {
 }
 
 function enableLyricsTab() {
+  for (const [tab, saved] of nativeTabOverrides) {
+    if (!tab.isConnected) restoreLyricsTab(tab, saved);
+  }
   for (const tab of getPlayerTabs()) {
     if (!tabLooksLikeLyrics(tab)) continue;
+    let saved = nativeTabOverrides.get(tab);
+    if (!saved) {
+      saved = { classPresent: tab.classList.contains("ctp-lyrics-tab"), attributes: new Map(), styles: new Map() };
+      nativeTabOverrides.set(tab, saved);
+    }
     tab.classList.add("ctp-lyrics-tab");
     const disabled =
       tab.hasAttribute("disabled") ||
       tab.getAttribute("aria-disabled") === "true" ||
       tab.disabled === true;
     if (!disabled && tab.style.pointerEvents === "auto") continue;
-    tab.removeAttribute("disabled");
-    tab.removeAttribute("aria-disabled");
-    tab.setAttribute("aria-disabled", "false");
-    tab.style.pointerEvents = "auto";
-    tab.style.opacity = "1";
+    if ("disabled" in tab) {
+      if (!saved.property || tab.disabled !== saved.property.applied) saved.property = { original: tab.disabled, applied: false };
+    }
+    for (const [name, value] of [["disabled", null], ["aria-disabled", "false"]]) {
+      const old = saved.attributes.get(name);
+      if (!old || tab.getAttribute(name) !== old.applied) saved.attributes.set(name, { original: tab.getAttribute(name), applied: value });
+    }
     if ("disabled" in tab) tab.disabled = false;
+    tab.removeAttribute("disabled");
+    tab.setAttribute("aria-disabled", "false");
+    for (const [name, value] of [["pointer-events", "auto"], ["opacity", "1"]]) {
+      const current = { value: tab.style.getPropertyValue(name), priority: tab.style.getPropertyPriority(name) };
+      const old = saved.styles.get(name);
+      if (!old || current.value !== old.applied) saved.styles.set(name, { original: current, applied: value });
+      tab.style.setProperty(name, value);
+    }
   }
+}
+
+function restoreLyricsTabs() {
+  for (const [tab, saved] of nativeTabOverrides) restoreLyricsTab(tab, saved);
+}
+
+function restoreLyricsTab(tab, saved) {
+  const attributes = [...saved.attributes].filter(([name, old]) => tab.getAttribute(name) === old.applied);
+  if (saved.property && tab.disabled === saved.property.applied) tab.disabled = saved.property.original;
+  for (const [name, old] of attributes) {
+    if (old.original === null) tab.removeAttribute(name);
+    else tab.setAttribute(name, old.original);
+  }
+  for (const [name, old] of saved.styles) {
+    if (tab.style.getPropertyValue(name) !== old.applied || tab.style.getPropertyPriority(name)) continue;
+    if (old.original.value) tab.style.setProperty(name, old.original.value, old.original.priority);
+    else tab.style.removeProperty(name);
+  }
+  if (!saved.classPresent) tab.classList.remove("ctp-lyrics-tab");
+  nativeTabOverrides.delete(tab);
 }
 
 function getPlayerTabs() {
@@ -492,7 +609,20 @@ function isPlayerPageTab(tab) {
 }
 
 function tabLooksLikeLyrics(tab) {
-  return /lyric/i.test(tab?.textContent || "");
+  if (!tab) return false;
+  const tabs = getPlayerTabs();
+  const identity = tabs.find((item) => /LYRICS/i.test([
+    item.id, item.getAttribute("aria-controls"), item.getAttribute("page-type"),
+    item.dataset.pageType, item.pageType, item.data?.pageType,
+  ].filter(Boolean).join(" "))) || tabs.find((item) => /lyric/i.test(item.textContent || "")) ||
+    // YTM's player-page tabs are Up next, Lyrics, Related in every locale.
+    (tabs.length >= 2 ? tabs[1] : /LYRICS/i.test(getTabPageType()) ? tabs[0] : null);
+  if (identity !== lyricsTabIdentity) {
+    const saved = nativeTabOverrides.get(lyricsTabIdentity);
+    if (saved) restoreLyricsTab(lyricsTabIdentity, saved);
+    lyricsTabIdentity = identity;
+  }
+  return tab === lyricsTabIdentity;
 }
 
 function isTabSelected(tab) {

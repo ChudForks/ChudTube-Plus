@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChudTube+</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="header">
+      <img class="logo" src="../../icons/icon128.png" width="48" height="48" alt="" />
+      <div>
+        <h1>ChudTube<span>+</span></h1>
+        <p>Controls for YouTube and YouTube Music</p>
+      </div>
+    </header>
+
+    <main>
+      <div class="section-heading"><span>Settings</span><span class="autosave">Saved automatically</span></div>
+      <section class="card" aria-labelledby="youtube-heading">
+        <div class="card-head">
+          <div class="service"><span class="service-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="5"/><path d="m10 9 5 3-5 3Z"/></svg></span><div><h2 id="youtube-heading">YouTube</h2><h3 class="subsection-title">Themes &amp; focus</h3></div></div>
+          <span class="pill" aria-hidden="true"></span>
+        </div>
+        <div class="setting-stack">
+          <label class="setting">
+            <span class="copy">
+              <span class="setting-title">Custom theme <span id="customSwatches" class="theme-swatches" aria-hidden="true"></span></span>
+              <span class="setting-help" id="custom-theme-help">Apply a custom color palette to youtube.com.</span>
+            </span>
+            <input id="customTheme" type="checkbox" role="switch" aria-label="Custom theme" aria-describedby="custom-theme-help" />
+          </label>
+          <button type="button" class="ghost-btn" id="editCustomTheme">Edit colors</button>
+        </div>
+        <label class="setting">
+          <span class="copy">
+            <span class="setting-title">Hide Shorts</span>
+            <span class="setting-help" id="hide-shorts-help">Removes Shorts shelves, cards, and navigation links.</span>
+          </span>
+          <input id="hideShorts" type="checkbox" role="switch" aria-label="Hide Shorts" aria-describedby="hide-shorts-help" />
+        </label>
+        <label class="setting">
+          <span class="copy">
+            <span class="setting-title">Hide Playables</span>
+            <span class="setting-help" id="hide-playables-help">Removes Playables shelves, cards, and navigation links.</span>
+          </span>
+          <input id="hidePlayables" type="checkbox" role="switch" aria-label="Hide Playables" aria-describedby="hide-playables-help" />
+        </label>
+      </section>
+
+      <section class="card" aria-labelledby="sponsorblock-heading">
+        <div class="card-head">
+          <div class="service"><span class="service-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h10l3 3v10l-3 3H7l-3-3V7Z"/><path d="m9 8 7 4-7 4Z"/></svg></span><div><h2 id="sponsorblock-heading">SponsorBlock</h2><h3 class="subsection-title">Segment controls</h3></div></div>
+          <span class="pill" aria-hidden="true"></span>
+        </div>
+        <div class="sb-skip-block">
+          <span class="setting-title" id="sponsorblock-categories-title">Skip categories</span>
+          <span class="setting-help" id="sponsorblock-help">Choose whether each community-marked segment is skipped automatically, shown with a button, or left alone.</span>
+          <div id="sponsorBlockCategories" class="sb-categories" role="group" aria-labelledby="sponsorblock-categories-title" aria-describedby="sponsorblock-help"></div>
+        </div>
+        <label class="setting">
+          <span class="copy">
+            <span class="setting-title">Show colored segment markers</span>
+            <span class="setting-help" id="sponsorblock-markers-help">Display category colors on the video timeline.</span>
+          </span>
+          <input id="sponsorBlockShowSegmentColors" type="checkbox" role="switch" aria-label="Show SponsorBlock colored segment markers" aria-describedby="sponsorblock-markers-help" />
+        </label>
+      </section>
+
+      <section class="card" aria-labelledby="music-heading">
+        <div class="card-head">
+          <div class="service"><span class="service-icon music-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></svg></span><div><h2 id="music-heading">YouTube Music</h2><h3 class="subsection-title">Playback &amp; themes</h3></div></div>
+          <span class="pill" aria-hidden="true"></span>
+        </div>
+        <label class="setting">
+          <span class="copy">
+            <span class="setting-title">True OLED black <span class="theme-swatch" aria-hidden="true"></span></span>
+            <span class="setting-help" id="music-oled-help">Replaces the gray player bar with pure black.</span>
+          </span>
+          <input id="musicOledBlack" type="checkbox" role="switch" aria-label="YouTube Music True OLED black" aria-describedby="music-oled-help" />
+        </label>
+        <label class="setting">
+          <span class="copy">
+            <span class="setting-title">Follow-along lyrics</span>
+            <span class="setting-help" id="lyrics-help">Show official lyrics and LRCLIB timing when available. Select a timed line to seek.</span>
+          </span>
+          <input id="followAlongLyrics" type="checkbox" role="switch" aria-label="Follow-along lyrics" aria-describedby="lyrics-help" />
+        </label>
+      </section>
+    </main>
+    <footer><span class="credits">Lyrics: YouTube Music &amp; <a href="https://lrclib.net" target="_blank" rel="noreferrer">LRCLIB <span aria-hidden="true">↗</span></a><span class="footer-separator" aria-hidden="true"></span>Segments: <a href="https://sponsor.ajay.app" target="_blank" rel="noreferrer">SponsorBlock <span aria-hidden="true">↗</span></a></span></footer>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

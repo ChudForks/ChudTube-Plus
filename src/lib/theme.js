@@ -148,6 +148,9 @@ export function contrastRatio(foreground, background) {
 
 export function customThemeCssVars(palette) {
   const next = mergeCustomTheme(palette);
+  const onAccent = contrastRatio("#ffffff", next.accent) >= contrastRatio("#000000", next.accent)
+    ? "#ffffff"
+    : "#000000";
   const vars = {
     "--ctp-custom-scheme": isDarkColor(next.background) ? "dark" : "light",
     "--ctp-theme-bg": next.background,
@@ -155,10 +158,8 @@ export function customThemeCssVars(palette) {
     "--ctp-theme-text": next.text,
     "--ctp-theme-muted": next.muted,
     "--ctp-theme-accent": next.accent,
-    "--ctp-theme-logo-glyph":
-      contrastRatio("#ffffff", next.accent) >= contrastRatio("#000000", next.accent)
-        ? "#ffffff"
-        : "#000000",
+    "--ctp-theme-on-accent": onAccent,
+    "--ctp-theme-logo-glyph": onAccent,
     "--ctp-theme-hover": next.hover,
     "--ctp-theme-outline": next.outline,
     "--ctp-theme-chip": next.hover,

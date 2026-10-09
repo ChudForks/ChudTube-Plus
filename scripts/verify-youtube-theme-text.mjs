@@ -5,7 +5,7 @@ import puppeteer from 'puppeteer-core';
 const css = await readFile('src/content/yt.css', 'utf8');
 const theme = (await readFile('src/lib/theme.js', 'utf8')).replace(/^export /gm, '');
 const controller = (await readFile('src/content/yt.js', 'utf8')).replace(/^import[\s\S]*?;\s*/gm, '');
-for (const file of ['content/yt.css', 'content/yt.js', 'lib/theme.js']) {
+for (const file of ['content/yt.css', 'content/yt.js', 'lib/theme.js', 'theme-editor/editor.css']) {
   assert.equal(await readFile(`src/${file}`, 'utf8'), await readFile(`firefox/src/${file}`, 'utf8'));
 }
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe', headless: true });
@@ -25,12 +25,39 @@ try {
     #inverse { color: var(--yt-sys-color-baseline--text-primary-inverse, #0f0f0f); }
     #link { color: var(--yt-sys-color-baseline--call-to-action, #3ea6ff); }
     #icon { color: var(--t0123456789abcdef); fill: currentColor; }
+    .ytSpecButtonShapeNextMono { color: #f1f1f1; background: rgba(255,255,255,.1); }
+    .ytSpecButtonShapeNextFilled { color: #0f0f0f; background: #f1f1f1; }
+    .ytIconWrapperHost { color: #fff; fill: currentColor; }
+    .ytSpecIconBadgeShapeHost { color: #f1f1f1; }
+    ytd-masthead button { color: #f1f1f1; }
+    .ytSearchboxComponentInputBox, .ytSearchboxComponentSearchButton { border: 1px solid #303030; color: #fff; }
+    .ytSearchboxComponentInput::placeholder { color: #757575; }
+    .ytChipShapeActive { color: #0f0f0f; background: #f1f1f1; }
+    .ytChipShapeInactive { color: #f1f1f1; }
     .overlay { color: #fff; }
   </style><ytd-app>
     <h1 id="generated">Video title</h1><p id="metadata">Channel · views</p>
     <button id="modern">Modern button</button><button id="legacy">Legacy button</button>
     <span id="disabled">Disabled</span><span id="inverse">Selected chip text</span><a id="link">Link</a>
     <svg id="icon"><path d="M0 0h10v10H0z"/></svg><span class="overlay">Player overlay</span>
+    <ytd-masthead><button id="guide"><yt-icon><svg><path d="M0 0h10v10H0z"/></svg></yt-icon></button>
+      <div id="searchbox" class="ytSearchboxComponentInputBox"><input id="search" class="ytSearchboxComponentInput" placeholder="Search"/></div>
+      <button id="search-button" class="ytSearchboxComponentSearchButton"><span class="ytIconWrapperHost"><svg><path d="M0 0h10v10H0z"/></svg></span></button>
+      <button id="notification"><div class="ytSpecIconBadgeShapeHost"><div class="ytSpecIconBadgeShapeIcon"><span class="ytIconWrapperHost"><svg><path id="notification-glyph" d="M0 0h10v10H0z"/></svg></span></div></div></button>
+    </ytd-masthead>
+    <button id="like" class="ytSpecButtonShapeNextMono ytSpecButtonShapeNextTonal ytSpecButtonShapeNextSegmentedStart" aria-pressed="false">
+      <yt-animated-icon animated-icon-type="LIKE"><svg><defs><clipPath><path id="clip" d="M0 0h10v10H0z"/></clipPath></defs>
+        <path id="like-glyph" fill="rgb(255,255,255)" d="M0 0h10v10H0z"/><path id="like-stroke" fill="none" stroke="#000" d="M0 0h10"/>
+        <path id="like-effect" fill="#ff2791" d="M0 0h5v5H0z"/>
+      </svg></yt-animated-icon>Like
+    </button>
+    <button id="dislike" class="ytSpecButtonShapeNextMono ytSpecButtonShapeNextTonal"><span class="ytIconWrapperHost"><svg><path id="dislike-glyph" d="M0 0h10v10H0z"/></svg></span>Dislike</button>
+    <button id="bell" class="ytSpecButtonShapeNextMono ytSpecButtonShapeNextTonal"><yt-animated-icon animated-icon-type="NOTIFICATION_BELL"><svg><path id="bell-glyph" fill="rgb(255, 255, 255)" d="M0 0h10v10H0z"/></svg></yt-animated-icon></button>
+    <button id="subscribe" class="ytSpecButtonShapeNextMono ytSpecButtonShapeNextFilled">Subscribe</button>
+    <button id="disabled-button" class="ytSpecButtonShapeNextMono ytSpecButtonShapeNextFilled" aria-disabled="true">Disabled action</button>
+    <button id="active-chip" class="ytChipShapeChip ytChipShapeActive">All</button><button id="inactive-chip" class="ytChipShapeChip ytChipShapeInactive">Music</button>
+    <div class="html5-video-player"><button id="video-overlay" class="ytSpecButtonShapeNextOverlay ytSpecButtonShapeNextTonal" style="color:#fff;background:rgba(255,255,255,.1)"><svg><path id="overlay-glyph" fill="#fff" d="M0 0h10v10H0z"/></svg></button></div>
+    <ytd-watch-metadata><div id="description-inline-expander"><span id="prose" class="ytAttributedStringLinkInheritColor" style="color:rgb(255,255,255)">Video description</span><a id="description-link" style="color:var(--yt-endpoint-color)">Channel link</a></div></ytd-watch-metadata>
     <ytd-topbar-logo-renderer><div id="logo-icon"><svg><g><path id="brand"/><path id="glyph"/></g><g id="youtube-paths_yt999"><path id="wordmark"/></g></svg></div></ytd-topbar-logo-renderer>
   </ytd-app>`);
   await install(page);
@@ -44,13 +71,50 @@ try {
     assert.equal(colors.link, rgb(palette.accent));
     assert.equal(colors.brand, rgb(palette.accent));
     assert.equal(colors.overlay, 'rgb(255, 255, 255)');
+    const ui = await readUi(page);
+    for (const key of ['like', 'dislike', 'bell', 'guide', 'search', 'search-button', 'inactive-chip', 'prose']) assert.equal(ui[key].color, rgb(palette.text), key);
+    for (const key of ['like-glyph', 'dislike-glyph', 'bell-glyph', 'notification-glyph']) assert.equal(ui[key].fill, rgb(palette.text), key);
+    assert.equal(ui['like-stroke'].stroke, rgb(palette.text));
+    assert.equal(ui['like-stroke'].fill, 'none');
+    assert.equal(ui['like-effect'].fill, 'rgb(255, 39, 145)', 'colored animation effects');
+    assert.equal(ui.subscribe.background, rgb(palette.accent));
+    assert.equal(ui.subscribe.color, palette.accent === '#ffff00' ? 'rgb(0, 0, 0)' : 'rgb(255, 255, 255)');
+    for (const key of ['like', 'dislike', 'bell', 'disabled-button']) assert.equal(ui[key].background, rgb(palette.surface), `${key} surface`);
+    assert.equal(ui['disabled-button'].color, rgb(palette.muted));
+    assert.equal(ui['active-chip'].background, rgb(palette.text));
+    assert.equal(ui['active-chip'].color, rgb(palette.background));
+    assert.equal(ui.searchbox.border, rgb(palette.outline));
+    assert.equal(ui['description-link'].color, rgb(palette.accent));
+    assert.equal(ui['video-overlay'].color, 'rgb(255, 255, 255)');
+    assert.equal(ui['overlay-glyph'].fill, 'rgb(255, 255, 255)');
+    // YouTube replaces Lottie paints during animation. CSS must follow each frame.
+    await page.$eval('#like-glyph', el => el.setAttribute('fill', '#000000'));
+    assert.equal((await readUi(page))['like-glyph'].fill, rgb(palette.text));
+    await page.$eval('#like', el => el.setAttribute('aria-pressed', 'true'));
+    assert.equal((await readUi(page)).like.background, rgb(palette.hover));
+    await page.$eval('#like', el => el.setAttribute('aria-pressed', 'false'));
+    await page.hover('#dislike');
+    assert.equal((await readUi(page)).dislike.background, rgb(palette.hover), 'reaction hover');
+    await page.$eval('#dislike', el => el.focus());
+    await page.keyboard.press('Tab');
+    assert.equal(await page.$eval('#bell', el => getComputedStyle(el).outlineColor), rgb(palette.accent), 'keyboard focus ring');
+    await page.$eval('#bell', el => el.blur());
+    await page.hover('#generated');
+    await page.focus('#search');
+    assert.equal(await page.$eval('#search', el => getComputedStyle(el, '::placeholder').color), rgb(palette.muted));
+    // Model the focus class applied by YouTube's search component.
+    await page.$eval('#searchbox', el => el.classList.add('ytSearchboxComponentInputBoxHasFocus'));
+    assert.equal((await readUi(page)).searchbox.border, rgb(palette.accent));
+    await page.$eval('#searchbox', el => el.classList.remove('ytSearchboxComponentInputBoxHasFocus'));
   }
   await page.evaluate(() => window.__ctpApplyYoutubeSettings({ theme: 'default' }));
   assert.equal((await readColors(page)).generated, 'rgb(15, 15, 15)');
+  assert.equal((await readUi(page)).like.background, 'rgba(255, 255, 255, 0.1)');
+  assert.equal((await readUi(page)).prose.color, 'rgb(255, 255, 255)');
   await apply(page, red);
   assert.equal((await readColors(page)).generated, rgb(red.text));
   assert.deepEqual(errors, []);
-  console.log('PASS: generated/legacy/system text, metadata, buttons, icons, logo, light/dark palette updates, and disable/re-enable.');
+  console.log('PASS: generated/legacy/system text, animated reactions and bell, UI surfaces, disabled/selected states, chips, search, description, overlay isolation, light/dark updates, and disable/re-enable.');
 
   if (process.argv.includes('--live')) {
     const live = await browser.newPage();
@@ -93,6 +157,14 @@ async function readColors(page) {
     ['generated', 'metadata', 'legacy', 'modern', 'disabled', 'inverse', 'link', 'icon', 'brand', 'glyph', 'wordmark', 'overlay'].map(key => {
       const el = document.querySelector(key === 'overlay' ? '.overlay' : `#${key}`);
       return [key, getComputedStyle(el)[['brand', 'glyph', 'wordmark'].includes(key) ? 'fill' : 'color']];
+    })
+  ));
+}
+async function readUi(page) {
+  return page.evaluate(() => Object.fromEntries(
+    ['like', 'dislike', 'bell', 'guide', 'search', 'searchbox', 'search-button', 'notification-glyph', 'like-glyph', 'like-stroke', 'like-effect', 'dislike-glyph', 'bell-glyph', 'subscribe', 'disabled-button', 'active-chip', 'inactive-chip', 'video-overlay', 'overlay-glyph', 'prose', 'description-link'].map(id => {
+      const style = getComputedStyle(document.getElementById(id));
+      return [id, { color: style.color, fill: style.fill, stroke: style.stroke, background: style.backgroundColor, border: style.borderTopColor }];
     })
   ));
 }

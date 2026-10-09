@@ -1,0 +1,439 @@
+html[data-ctp-theme] {
+  --ctp-theme-bg: #000;
+  --ctp-theme-surface: #000;
+  --ctp-theme-text: #f1f1f1;
+  --ctp-theme-muted: #aaa;
+  --ctp-theme-accent: #f00;
+  --ctp-theme-hover: rgba(255, 255, 255, 0.08);
+  --ctp-theme-chip: rgba(255, 255, 255, 0.1);
+  --ctp-theme-outline: #222;
+  --ctp-theme-scheme: dark;
+}
+
+html[data-ctp-theme="custom"] {
+  --ctp-theme-bg: var(--ctp-custom-background, #140f18);
+  --ctp-theme-surface: var(--ctp-custom-surface, #1f1828);
+  --ctp-theme-text: var(--ctp-custom-text, #f4f1ef);
+  --ctp-theme-muted: var(--ctp-custom-muted, #b4aeb8);
+  --ctp-theme-accent: var(--ctp-custom-accent, #ff695b);
+  --ctp-theme-hover: var(--ctp-custom-hover, #2b2338);
+  --ctp-theme-chip: var(--ctp-custom-hover, #2b2338);
+  --ctp-theme-outline: var(--ctp-custom-outline, #3d344c);
+  --ctp-theme-scheme: var(--ctp-custom-scheme, dark);
+}
+
+html[data-ctp-theme]:not(.style-scope),
+html[data-ctp-theme]:not(.style-scope)[dark],
+html[data-ctp-theme]:not(.style-scope)[darker-dark-theme],
+html[data-ctp-theme][dark],
+html[data-ctp-theme][darker-dark-theme],
+html[data-ctp-theme] ytd-app,
+html[data-ctp-theme] [dark] {
+  color-scheme: var(--ctp-theme-scheme, dark);
+
+  --ctp-oled: var(--ctp-theme-bg, #000);
+  --ctp-oled-hover: var(--ctp-theme-hover);
+  --ctp-oled-chip: var(--ctp-theme-chip);
+  --ctp-oled-outline: var(--ctp-theme-outline);
+
+  --yt-spec-base-background: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-raised-background: var(--ctp-theme-surface, #000) !important;
+  --yt-spec-menu-background: var(--ctp-theme-surface, #000) !important;
+  --yt-spec-brand-background-solid: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-brand-background-primary: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-brand-background-secondary: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-general-background-a: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-general-background-b: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-general-background-c: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-additive-background: var(--ctp-theme-hover) !important;
+  --yt-spec-error-background: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-snackbar-background: var(--ctp-theme-surface, #000) !important;
+  --yt-spec-overlay-background-solid: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-static-overlay-background-solid: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-static-overlay-background-heavy: rgba(0, 0, 0, 0.8) !important;
+  --yt-spec-themed-overlay-background: rgba(0, 0, 0, 0.8) !important;
+  --yt-spec-badge-chip-background: var(--ctp-theme-chip) !important;
+  --yt-spec-button-chip-background-hover: var(--ctp-theme-hover) !important;
+  --yt-spec-10-percent-layer: var(--ctp-theme-chip) !important;
+  --yt-spec-outline: var(--ctp-theme-hover) !important;
+  --yt-spec-outline-opaque: var(--ctp-theme-outline) !important;
+  --yt-spec-frosted-glass-desktop: var(--ctp-theme-bg, #000) !important;
+  --yt-frosted-glass-desktop: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-scrim-background-gradient-5: var(--ctp-theme-bg, #000) !important;
+  --yt-saturated-raised-background: var(--ctp-theme-surface, #000) !important;
+  --yt-lightsource-section1-color: var(--ctp-theme-bg, #000) !important;
+  --yt-lightsource-section2-color: var(--ctp-theme-bg, #000) !important;
+  --yt-lightsource-section3-color: var(--ctp-theme-bg, #000) !important;
+  --yt-lightsource-section4-color: var(--ctp-theme-bg, #000) !important;
+  --yt-saturated-base-background: var(--ctp-theme-bg, #000) !important;
+
+  --yt-sys-color-baseline--base-background: var(--ctp-theme-bg, #000) !important;
+  --yt-sys-color-baseline--raised-background: var(--ctp-theme-surface, #000) !important;
+  --yt-sys-color-baseline--menu-background: var(--ctp-theme-surface, #000) !important;
+  --yt-sys-color-baseline--additive-background: var(--ctp-theme-hover) !important;
+  --yt-sys-color-baseline--overlay-background-solid: var(--ctp-theme-bg, #000) !important;
+  --yt-sys-color-baseline--outline: var(--ctp-theme-hover) !important;
+  --yt-sys-color-baseline--outline-opaque: var(--ctp-theme-outline) !important;
+  --yt-sys-color-baseline--scrim-background-gradient-5: var(--ctp-theme-bg, #000) !important;
+
+  --ytd-searchbox-background: var(--ctp-theme-surface, #000) !important;
+  --ytd-searchbox-legacy-button-color: var(--ctp-theme-surface, #000) !important;
+  --ytd-searchbox-legacy-border-color: var(--ctp-theme-outline) !important;
+  --ytd-searchbox-legacy-button-border-color: var(--ctp-theme-outline) !important;
+  --ytd-searchbox-border-color: var(--ctp-theme-outline) !important;
+
+  --dark-theme-background-color: var(--ctp-theme-bg, #000) !important;
+  --primary-background-color: var(--ctp-theme-bg, #000) !important;
+  --paper-dialog-background-color: var(--ctp-theme-surface, #000) !important;
+  --app-drawer-content-container-background-color: var(--ctp-theme-bg, #000) !important;
+
+  --yt-live-chat-background-color: var(--ctp-theme-bg, #000) !important;
+  --yt-live-chat-action-panel-background-color: var(--ctp-theme-surface, #000) !important;
+  --yt-live-chat-secondary-background-color: var(--ctp-theme-surface, #000) !important;
+  --yt-live-chat-dialog-background-color: var(--ctp-theme-surface, #000) !important;
+  --yt-live-chat-sub-panel-background-color: var(--ctp-theme-surface, #000) !important;
+}
+
+html[data-ctp-theme="custom"]:not(.style-scope),
+html[data-ctp-theme="custom"][dark],
+html[data-ctp-theme="custom"][darker-dark-theme],
+html[data-ctp-theme="custom"] ytd-app,
+html[data-ctp-theme="custom"] [dark] {
+  --yt-spec-text-primary: var(--ctp-theme-text) !important;
+  --yt-spec-text-secondary: var(--ctp-theme-muted) !important;
+  --yt-spec-text-disabled: var(--ctp-theme-muted) !important;
+  --yt-spec-text-primary-inverse: var(--ctp-theme-bg, #000) !important;
+  --yt-spec-call-to-action: var(--ctp-theme-accent) !important;
+  --yt-spec-brand-link-text: var(--ctp-theme-accent) !important;
+  --yt-spec-static-brand-red: var(--ctp-theme-accent) !important;
+  --yt-spec-themed-blue: var(--ctp-theme-accent) !important;
+  --yt-spec-base-blue: var(--ctp-theme-accent) !important;
+  --yt-endpoint-color: var(--ctp-theme-accent) !important;
+  --yt-endpoint-hover-color: var(--ctp-theme-accent) !important;
+  --yt-spec-icon-inactive: var(--ctp-theme-muted) !important;
+  --yt-spec-icon-active-other: var(--ctp-theme-text) !important;
+  --yt-spec-icon-disabled: var(--ctp-theme-muted) !important;
+  --yt-sys-color-baseline--text-primary: var(--ctp-theme-text) !important;
+  --yt-sys-color-baseline--text-secondary: var(--ctp-theme-muted) !important;
+  --yt-sys-color-baseline--text-disabled: var(--ctp-theme-muted) !important;
+  --yt-sys-color-baseline--text-primary-inverse: var(--ctp-theme-bg, #000) !important;
+  --yt-sys-color-baseline--call-to-action: var(--ctp-theme-accent) !important;
+  --yt-live-chat-primary-text-color: var(--ctp-theme-text) !important;
+  --yt-live-chat-secondary-text-color: var(--ctp-theme-muted) !important;
+}
+
+/* Modern buttons and masthead icons also carry generated or literal colors.
+   Theme the UI variants; overlay variants keep their contrast over video. */
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono),
+html[data-ctp-theme="custom"] ytd-masthead :is(button, yt-icon-button) {
+  color: var(--ctp-theme-text) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono, ytd-masthead) :is(yt-icon, .ytIconWrapperHost, .ytSpecIconBadgeShapeHost, .ytSpecIconBadgeShapeIcon) {
+  color: inherit !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono.ytSpecButtonShapeNextTonal, .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--tonal) {
+  background: var(--ctp-theme-surface) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono.ytSpecButtonShapeNextOutline, .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--outline) {
+  border-color: var(--ctp-theme-outline) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono):is(:hover, :active):not([disabled]):not([aria-disabled="true"]),
+html[data-ctp-theme="custom"] ytd-masthead :is(yt-icon-button, ytd-notification-topbar-button-renderer):hover {
+  background: var(--ctp-theme-hover) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono.ytSpecButtonShapeNextFilled, .yt-spec-button-shape-next--mono.yt-spec-button-shape-next--filled, .ytSpecButtonShapeNextCallToAction.ytSpecButtonShapeNextFilled, .yt-spec-button-shape-next--call-to-action.yt-spec-button-shape-next--filled) {
+  background: var(--ctp-theme-accent) !important;
+  color: var(--ctp-theme-on-accent, #fff) !important;
+}
+
+/* A selected reaction stays distinguishable from the unselected pair. */
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono)[aria-pressed="true"] {
+  background: var(--ctp-theme-hover) !important;
+  box-shadow: inset 0 0 0 1px var(--ctp-theme-accent);
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono):is([disabled], [aria-disabled="true"], .ytSpecButtonShapeNextDisabled, .yt-spec-button-shape-next--disabled) {
+  color: var(--ctp-theme-muted) !important;
+  background: var(--ctp-theme-surface) !important;
+  box-shadow: none;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextSegmentedStart, .yt-spec-button-shape-next--segmented-start)::after {
+  background: var(--ctp-theme-outline) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSpecButtonShapeNextMono, .yt-spec-button-shape-next--mono, .ytSpecButtonShapeNextCallToAction, .yt-spec-button-shape-next--call-to-action, .ytChipShapeChip, ytd-masthead button):focus-visible {
+  outline: 2px solid var(--ctp-theme-accent) !important;
+  outline-offset: 2px;
+}
+
+/* Lottie paints neutral glyphs with literal black/white SVG attributes.
+   Override only those paints, preserving masks, opacity and colored effects. */
+html[data-ctp-theme="custom"] :is(yt-animated-icon[animated-icon-type="LIKE"], yt-animated-icon[animated-icon-type="DISLIKE"], yt-animated-icon[animated-icon-type="NOTIFICATION_BELL"]) :is([fill="rgb(255,255,255)"], [fill="rgb(255, 255, 255)"], [fill="#fff" i], [fill="#ffffff" i], [fill="white" i], [fill="rgb(0,0,0)"], [fill="rgb(0, 0, 0)"], [fill="#000"], [fill="#000000"], [fill="black" i]) {
+  fill: currentColor !important;
+}
+
+html[data-ctp-theme="custom"] :is(yt-animated-icon[animated-icon-type="LIKE"], yt-animated-icon[animated-icon-type="DISLIKE"], yt-animated-icon[animated-icon-type="NOTIFICATION_BELL"]) :is([stroke="rgb(255,255,255)"], [stroke="rgb(255, 255, 255)"], [stroke="#fff" i], [stroke="#ffffff" i], [stroke="white" i], [stroke="rgb(0,0,0)"], [stroke="rgb(0, 0, 0)"], [stroke="#000"], [stroke="#000000"], [stroke="black" i]) {
+  stroke: currentColor !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSearchboxComponentInput, .ytSearchboxComponentSearchButton, .ytSearchboxComponentInputBox, .ytSearchboxComponentSuggestionsContainer) {
+  color: var(--ctp-theme-text) !important;
+}
+
+html[data-ctp-theme="custom"] .ytSearchboxComponentInput {
+  caret-color: var(--ctp-theme-accent);
+}
+
+html[data-ctp-theme="custom"] .ytSearchboxComponentInput::placeholder {
+  color: var(--ctp-theme-muted);
+  opacity: 1;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSearchboxComponentInputBox, .ytSearchboxComponentSearchButton, .ytSearchboxComponentInputContainerIsFocused) {
+  border-color: var(--ctp-theme-outline) !important;
+  box-shadow: none !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSearchboxComponentInputBoxHasFocus, .ytSearchboxComponentInputContainerIsFocused) {
+  border-color: var(--ctp-theme-accent) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytSearchboxComponentInputWrapperIsFocused, .ytSearchboxComponentInputContainerIsFocused) {
+  background: var(--ctp-theme-surface) !important;
+}
+
+html[data-ctp-theme="custom"] .ytSearchboxComponentSearchButton:hover {
+  background: var(--ctp-theme-hover) !important;
+}
+
+html[data-ctp-theme="custom"] .ytChipShapeInactive {
+  color: var(--ctp-theme-text) !important;
+}
+
+html[data-ctp-theme="custom"] .ytChipShapeInactive:hover {
+  background: var(--ctp-theme-surface) !important;
+}
+
+html[data-ctp-theme="custom"] :is(.ytChipShapeActive, .ytChipShapeActiveRedesign) {
+  background: var(--ctp-theme-text) !important;
+  color: var(--ctp-theme-bg) !important;
+}
+
+/* Description prose arrives with inline white spans even in a light theme.
+   Link spans have a separate class and retain their accent color. */
+html[data-ctp-theme="custom"] ytd-watch-metadata :is(#description-inline-expander, #description-inline-expander .ytAttributedStringLinkInheritColor) {
+  color: var(--ctp-theme-text) !important;
+}
+
+/* YouTube's brand mark and watch progress UI use literal red fills rather
+   than the public theme tokens above. Keep the wordmark and play glyph
+   legible, while letting a custom theme own the red logo container, the
+   playback timeline, and the resume bars on video thumbnails. */
+html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg > g:first-child > path:first-child {
+  fill: var(--ctp-theme-accent) !important;
+}
+
+html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg > g:first-child > path:nth-child(2) {
+  fill: var(--ctp-theme-logo-glyph, #fff) !important;
+}
+
+html[data-ctp-theme="custom"] ytd-topbar-logo-renderer #logo-icon svg [id^="youtube-paths"] path {
+  fill: var(--ctp-theme-text) !important;
+}
+
+/* Hover previews use the newer player components with literal red-to-pink
+   gradients. Theme the played segments alongside the legacy player. */
+html[data-ctp-theme="custom"] .ytp-play-progress,
+html[data-ctp-theme="custom"] .ytProgressBarLineProgressBarPlayed,
+html[data-ctp-theme="custom"] .ytChapteredProgressBarChapteredPlayerBarChapterSeen,
+html[data-ctp-theme="custom"] .ytChapteredProgressBarChapteredPlayerBarFill,
+html[data-ctp-theme="custom"] .ytFocusedChapterProgressBarLineProgressBarPlayed {
+  background: var(--ctp-theme-accent) !important;
+  background-image: none !important;
+}
+
+html[data-ctp-theme="custom"] .ytp-scrubber-button.ytp-swatch-background-color,
+html[data-ctp-theme="custom"] .ytProgressBarPlayheadProgressBarPlayheadDot {
+  background-color: var(--ctp-theme-accent) !important;
+}
+
+/* Thumbnail resume bars are a separate overlay from the player swatch.
+   Polymer still paints #progress with #f00; newer view-models use
+   WatchedProgressBarSegment. Set brand-red on the host so it inherits
+   into any shadow tree, then override the filled segment in light DOM. */
+html[data-ctp-theme="custom"] ytd-thumbnail-overlay-resume-playback-renderer,
+html[data-ctp-theme="custom"] ytm-thumbnail-overlay-resume-playback-renderer,
+html[data-ctp-theme="custom"] ytw-thumbnail-overlay-resume-playback-renderer,
+html[data-ctp-theme="custom"] yt-thumbnail-overlay-progress-bar-view-model {
+  --yt-spec-static-brand-red: var(--ctp-theme-accent) !important;
+}
+
+html[data-ctp-theme="custom"] ytd-thumbnail-overlay-resume-playback-renderer #progress,
+html[data-ctp-theme="custom"] ytm-thumbnail-overlay-resume-playback-renderer #progress,
+html[data-ctp-theme="custom"] ytw-thumbnail-overlay-resume-playback-renderer [class*="ResumePlaybackProgress"],
+html[data-ctp-theme="custom"] [class*="WatchedProgressBarSegment"] {
+  background: var(--ctp-theme-accent) !important;
+  background-color: var(--ctp-theme-accent) !important;
+  background-image: none !important;
+}
+
+/* SponsorBlock markers sit above the themed play-progress fill. */
+html[data-ctp-theme] .ctp-sponsorblock-markers {
+  z-index: 42 !important;
+}
+
+html[data-ctp-theme] .ctp-sponsorblock-marker {
+  background-color: var(--ctp-sb-color) !important;
+  background-image: none !important;
+}
+
+html[data-ctp-theme],
+html[data-ctp-theme] body,
+html[data-ctp-theme] ytd-app,
+html[data-ctp-theme] ytd-browse,
+html[data-ctp-theme] ytd-page-manager,
+html[data-ctp-theme] ytd-watch-flexy,
+html[data-ctp-theme] ytd-watch-flexy[theater],
+html[data-ctp-theme] ytd-app[is-watch-page],
+html[data-ctp-theme] ytd-app[is-shorts-page],
+html[data-ctp-theme] #page-manager,
+html[data-ctp-theme] #columns,
+html[data-ctp-theme] #primary,
+html[data-ctp-theme] #secondary,
+html[data-ctp-theme] #content,
+html[data-ctp-theme] #contents {
+  background: var(--ctp-theme-bg, #000) !important;
+  background-color: var(--ctp-theme-bg, #000) !important;
+}
+
+html[data-ctp-theme="custom"],
+html[data-ctp-theme="custom"] body,
+html[data-ctp-theme="custom"] ytd-app {
+  color: var(--ctp-theme-text) !important;
+}
+
+html[data-ctp-theme] #skip-navigation,
+html[data-ctp-theme] ytd-feed-nudge-renderer,
+html[data-ctp-theme] ytd-feed-nudge-renderer #content-wrapper,
+html[data-ctp-theme] ytd-comments,
+html[data-ctp-theme] #description.ytd-watch-metadata,
+html[data-ctp-theme] #description-inner.ytd-watch-metadata,
+html[data-ctp-theme] ytd-watch-metadata,
+html[data-ctp-theme] ytd-rich-grid-renderer,
+html[data-ctp-theme] ytd-two-column-browse-results-renderer,
+html[data-ctp-theme] #below,
+html[data-ctp-theme] #related,
+html[data-ctp-theme] ytd-masthead,
+html[data-ctp-theme] #masthead-container,
+html[data-ctp-theme] #background.ytd-masthead,
+html[data-ctp-theme] #container.ytd-masthead,
+html[data-ctp-theme] #frosted-glass,
+html[data-ctp-theme] #frosted-glass.ytd-app,
+html[data-ctp-theme] #chips-wrapper,
+html[data-ctp-theme] ytd-feed-filter-chip-bar-renderer,
+html[data-ctp-theme] #header.ytd-rich-grid-renderer,
+html[data-ctp-theme] #guide-content,
+html[data-ctp-theme] ytd-mini-guide-renderer,
+html[data-ctp-theme] ytd-mini-guide-entry-renderer,
+html[data-ctp-theme] tp-yt-app-drawer #contentContainer,
+html[data-ctp-theme] #guide-inner-content,
+html[data-ctp-theme] ytd-playlist-sidebar-renderer,
+html[data-ctp-theme] ytd-playlist-header-renderer,
+html[data-ctp-theme] ytd-engagement-panel-section-list-renderer,
+html[data-ctp-theme] ytd-miniplayer,
+html[data-ctp-theme] ytd-miniplayer[active],
+html[data-ctp-theme] .playlist-items.ytd-playlist-panel-renderer,
+html[data-ctp-theme] ytd-playlist-panel-renderer,
+html[data-ctp-theme] #guide-skeleton,
+html[data-ctp-theme] #home-container-skeleton,
+html[data-ctp-theme] #home-chips {
+  background: var(--ctp-theme-bg, #000) !important;
+  background-color: var(--ctp-theme-bg, #000) !important;
+}
+
+/* The guide overlay is a full-viewport drawer. Painting it opaque hides the
+   watch player. Only the 240px panel should use the theme background. */
+html[data-ctp-theme] tp-yt-app-drawer#guide {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html[data-ctp-theme] .ytSearchboxComponentInputBox,
+html[data-ctp-theme] .ytSearchboxComponentInputBoxDark,
+html[data-ctp-theme] .ytSearchboxComponentSuggestionsContainer,
+html[data-ctp-theme] .ytSearchboxComponentSuggestionsContainerDark,
+html[data-ctp-theme] .ytSearchboxComponentSearchButton,
+html[data-ctp-theme] .ytSearchboxComponentSearchButtonDark {
+  background: var(--ctp-theme-surface, #000) !important;
+  background-color: var(--ctp-theme-surface, #000) !important;
+}
+
+html[data-ctp-theme] .ytChipShapeInactive {
+  background: var(--ctp-theme-chip) !important;
+}
+
+html[data-ctp-theme] tp-yt-paper-dialog,
+html[data-ctp-theme] tp-yt-paper-listbox,
+html[data-ctp-theme] ytd-popup-container,
+html[data-ctp-theme] ytd-menu-popup-renderer,
+html[data-ctp-theme] yt-sheet-view-model,
+html[data-ctp-theme] .ytContextualSheetLayoutHost,
+html[data-ctp-theme] .ytSpecDialogLayoutHost,
+html[data-ctp-theme] ytd-multi-page-menu-renderer,
+html[data-ctp-theme] yt-confirm-dialog-renderer[dialog] {
+  background: var(--ctp-theme-surface, #000) !important;
+  background-color: var(--ctp-theme-surface, #000) !important;
+}
+
+html[data-ctp-theme] #cinematics,
+html[data-ctp-theme] #cinematic-container,
+html[data-ctp-theme] #cinematics-container {
+  display: none !important;
+}
+
+html[data-ctp-theme] ytm-app,
+html[data-ctp-theme] ytm-browse,
+html[data-ctp-theme] ytm-mobile-topbar-renderer,
+html[data-ctp-theme] .mobile-topbar-header,
+html[data-ctp-theme] ytm-pivot-bar-renderer,
+html[data-ctp-theme] .chip-bar {
+  background: var(--ctp-theme-bg, #000) !important;
+  background-color: var(--ctp-theme-bg, #000) !important;
+}
+
+/* YouTube changes the exact renderer used for shelves over time. These selectors
+   cover the current desktop and mobile navigation, feeds, and search results. */
+html[data-ctp-hide-shorts] ytd-reel-shelf-renderer,
+html[data-ctp-hide-shorts] ytd-rich-shelf-renderer[is-shorts],
+html[data-ctp-hide-shorts] ytd-shorts,
+html[data-ctp-hide-shorts] ytd-guide-entry-renderer[data-ctp-hidden-feature="shorts"],
+html[data-ctp-hide-shorts] ytd-mini-guide-entry-renderer[data-ctp-hidden-feature="shorts"],
+html[data-ctp-hide-shorts] ytd-guide-entry-renderer:has(a[href^="/shorts"]),
+html[data-ctp-hide-shorts] ytd-mini-guide-entry-renderer:has(a[href^="/shorts"]),
+html[data-ctp-hide-shorts] ytd-rich-section-renderer:has(ytd-reel-shelf-renderer),
+html[data-ctp-hide-shorts] ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+html[data-ctp-hide-shorts] ytd-rich-item-renderer:has(a[href^="/shorts/"]),
+html[data-ctp-hide-shorts] ytd-video-renderer:has(a[href^="/shorts/"]),
+html[data-ctp-hide-shorts] ytm-pivot-bar-item-renderer:has(a[href^="/shorts"]),
+html[data-ctp-hide-shorts] ytm-rich-item-renderer:has(a[href^="/shorts/"]) {
+  display: none !important;
+}
+
+html[data-ctp-hide-playables] ytd-playables-shelf-renderer,
+html[data-ctp-hide-playables] ytd-game-card-renderer,
+html[data-ctp-hide-playables] ytd-guide-entry-renderer[data-ctp-hidden-feature="playables"],
+html[data-ctp-hide-playables] ytd-mini-guide-entry-renderer[data-ctp-hidden-feature="playables"],
+html[data-ctp-hide-playables] ytd-guide-entry-renderer:has(a[href^="/playables"]),
+html[data-ctp-hide-playables] ytd-mini-guide-entry-renderer:has(a[href^="/playables"]),
+html[data-ctp-hide-playables] ytd-rich-section-renderer:has(ytd-playables-shelf-renderer),
+html[data-ctp-hide-playables] ytd-rich-item-renderer:has(a[href^="/playables"]),
+html[data-ctp-hide-playables] ytm-pivot-bar-item-renderer:has(a[href^="/playables"]),
+html[data-ctp-hide-playables] ytm-rich-item-renderer:has(a[href^="/playables"]) {
+  display: none !important;
+}

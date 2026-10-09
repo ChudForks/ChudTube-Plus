@@ -20,7 +20,7 @@ const STAMP_STYLE_PROPS = ["background", "background-color", "color-scheme", "co
 const overridden = new Map();
 let currentTheme = THEME_OLED;
 let currentPalette = { ...OLED_PALETTE };
-const forcedDarkAttrs = new Set();
+let nativeDarkAttributes = null;
 const stampedVars = new Set();
 const generatedTextTokens = new Map();
 let generatedTokensDirty = true;
@@ -198,11 +198,16 @@ function applyTheme(theme, customTheme) {
     stamp(false);
     clearRemap();
     releaseBootTheme();
-    for (const name of forcedDarkAttrs) root.removeAttribute(name);
-    forcedDarkAttrs.clear();
+    if (nativeDarkAttributes) restoreDarkAttributes(nativeDarkAttributes);
+    nativeDarkAttributes = null;
     return;
   }
 
+  // The boot script may already have changed appearance before this module loads.
+  nativeDarkAttributes ??= new Map(
+    globalThis.__ctpOledBootState?.nativeDarkAttributes ||
+    DARK_ATTRS.map((name) => [name, root.getAttribute(name)])
+  );
   root.setAttribute(ATTR, nextTheme);
   ensureAppearance();
   mountSheet();
@@ -314,14 +319,20 @@ function ensureAppearance() {
     DARK_ATTRS.forEach((name) => {
       if (!root.hasAttribute(name)) {
         root.setAttribute(name, "");
-        forcedDarkAttrs.add(name);
       }
     });
     return;
   }
   for (const name of DARK_ATTRS) {
     root.removeAttribute(name);
-    forcedDarkAttrs.delete(name);
+  }
+}
+
+function restoreDarkAttributes(attributes) {
+  const root = document.documentElement;
+  for (const [name, value] of attributes) {
+    if (value === null) root.removeAttribute(name);
+    else root.setAttribute(name, value);
   }
 }
 
@@ -329,7 +340,8 @@ function releaseBootTheme() {
   const state = globalThis.__ctpOledBootState;
   if (!state) return;
   const root = document.documentElement;
-  for (const name of state.darkAttributes || []) root.removeAttribute(name);
+  if (state.nativeDarkAttributes) restoreDarkAttributes(state.nativeDarkAttributes);
+  else for (const name of state.darkAttributes || []) root.removeAttribute(name);
   for (const [name, previous] of state.styles || []) {
     if (previous.value) root.style.setProperty(name, previous.value, previous.priority);
     else root.style.removeProperty(name);
@@ -341,6 +353,7 @@ function scheduleRemap() {
   if (!isThemed() || remapTimer) return;
   remapTimer = window.requestAnimationFrame(() => {
     remapTimer = 0;
+    if (!isThemed()) return;
     stamp(true);
     remapTokens();
   });

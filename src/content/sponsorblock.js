@@ -33,6 +33,8 @@ let lastSkip = { id: "", at: 0 };
 let markerLayer = null;
 let markerHost = null;
 let markerHostPosition = "";
+let markerRenderKey = "";
+let markerCount = 0;
 let skipButton = null;
 let skipHost = null;
 let skipHostPosition = "";
@@ -284,7 +286,14 @@ function renderMarkers() {
     host.append(markerLayer);
   }
 
-  markerLayer.replaceChildren(...segments.map((segment) => createMarker(segment, duration)).filter(Boolean));
+  const renderKey = JSON.stringify([duration, segments.map(({ start, end, category }) => [start, end, category])]);
+  // Our child changes reach the page observer too. Only rebuild when the
+  // timeline changes, so an idle player does not schedule itself every frame.
+  if (markerRenderKey === renderKey && markerLayer.childElementCount === markerCount) return;
+  const markers = segments.map((segment) => createMarker(segment, duration)).filter(Boolean);
+  markerLayer.replaceChildren(...markers);
+  markerRenderKey = renderKey;
+  markerCount = markers.length;
 }
 
 function findProgressHost() {
@@ -326,6 +335,8 @@ function removeMarkers() {
   markerLayer = null;
   markerHost = null;
   markerHostPosition = "";
+  markerRenderKey = "";
+  markerCount = 0;
 }
 
 function removeSkipButton() {

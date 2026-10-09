@@ -68,11 +68,15 @@ onSettingsChanged((next) => {
   enabled = next.youtube.theme === "custom";
   useOnYoutube.checked = enabled;
   if (pendingWrite) return;
-  savedPalette = mergeCustomTheme(next.youtube.customTheme);
-  if (selectedPreset === "custom") palette = { ...savedPalette };
+  const nextSavedPalette = mergeCustomTheme(next.youtube.customTheme);
+  if (samePalette(nextSavedPalette, savedPalette)) return;
+  const hasUnsavedChanges = !samePalette(palette, savedPalette);
+  savedPalette = nextSavedPalette;
+  if (selectedPreset === "custom" && !hasUnsavedChanges) palette = { ...savedPalette };
   renderPresets();
   syncControls();
   paintPreview();
+  setStatus(samePalette(palette, savedPalette) ? "Saved in Custom" : "Unsaved changes");
 });
 
 function renderFieldControls() {

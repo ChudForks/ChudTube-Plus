@@ -145,10 +145,10 @@ try {
     "widening the window alone does not enlarge lyrics");
   await page.setViewport({ width: 900, height: 700 });
   await page.$eval("#tab-renderer", el => { el.style.width = "360px"; });
-  const bounce = await page.$eval(".ctp-line-active .ctp-text", el => el.getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.effect.getTiming());
+  const bounce = await page.$eval(".ctp-line-active .ctp-body", el => el.getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.effect.getTiming());
   assert.ok(bounce.duration >= 500 && bounce.duration <= 800, "spring settles promptly");
   assert.equal(bounce.iterations, 1);
-  const samples = await page.$eval(".ctp-line-active .ctp-text", el => {
+  const samples = await page.$eval(".ctp-line-active .ctp-body", el => {
     const animation = el.getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce");
     animation.pause();
     const samples = [0, 0.34, 0.56, 0.74, 1].map(progress => {
@@ -165,25 +165,27 @@ try {
   assert.equal(samples.at(-1).scale, 1, "settled text stays within its original layout");
   assert.equal(await page.$eval(".ctp-line-active .ctp-text", el => el.textContent), "LRCLIB active line");
   assert.deepEqual(await page.$$eval(".ctp-line-active .ctp-word", words => words.map(el => el.getAnimations().find(animation => animation.animationName === "ctp-word-bounce")?.effect.getTiming().delay)), [0, 32, 64]);
-  await page.waitForFunction(() => document.querySelector(".ctp-line-active .ctp-text").getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.playState === "finished");
+  await page.waitForFunction(() => document.querySelector(".ctp-line-active .ctp-body").getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.playState === "finished");
   const beforeChange = await page.$eval('.ctp-line[data-index="2"]', el => ({ height: el.offsetHeight, top: el.offsetTop }));
   await page.evaluate(() => window.postMessage({ type: "CTP_TIME", currentTime: 22, paused: true }, "*"));
   await page.waitForFunction(() => document.querySelector(".ctp-line-active")?.dataset.index === "2");
-  const newAnimation = await page.$eval(".ctp-line-active .ctp-text", el => el.getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.playState);
+  const newAnimation = await page.$eval(".ctp-line-active .ctp-body", el => el.getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.playState);
   assert.equal(newAnimation, "running");
   assert.deepEqual(await page.$eval('.ctp-line[data-index="2"]', el => ({ height: el.offsetHeight, top: el.offsetTop })), beforeChange);
-  assert.equal(await page.$eval('.ctp-line[data-index="1"] .ctp-text', el => el.getAnimations().filter(animation => animation.animationName === "ctp-lyric-bounce").length), 0);
+  assert.equal(await page.$eval('.ctp-line[data-index="1"] .ctp-body', el => el.getAnimations().filter(animation => animation.animationName === "ctp-lyric-bounce").length), 0);
   await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
-  assert.equal(await page.$eval(".ctp-line-active .ctp-text", el => el.getAnimations().filter(animation => animation.animationName === "ctp-lyric-bounce").length), 1);
+  assert.equal(await page.$eval(".ctp-line-active .ctp-body", el => el.getAnimations().filter(animation => animation.animationName === "ctp-lyric-bounce").length), 1);
   await options(page, { lyricsMotion: "system" });
   await page.evaluate(() => window.postMessage({ type: "CTP_TIME", currentTime: 12, paused: true }, "*"));
   await page.waitForFunction(() => document.querySelector(".ctp-line-active")?.dataset.index === "1");
-  assert.equal(await page.$eval(".ctp-line-active .ctp-text", el => el.getAnimations().filter(animation => animation.animationName === "ctp-lyric-bounce").length), 1);
+  assert.equal(await page.$eval(".ctp-line-active .ctp-body", el => el.getAnimations().filter(animation => animation.animationName === "ctp-lyric-bounce").length), 1);
   assert.equal(await page.$$eval(".ctp-line-active .ctp-word", words => words.every(el => el.getAnimations().some(animation => animation.animationName === "ctp-word-bounce"))), true);
   assert.notEqual(await page.$eval(".ctp-line-active .ctp-text", el => getComputedStyle(el).transitionDuration), "0s");
   await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "no-preference" }]);
-  await page.waitForFunction(() => document.querySelector(".ctp-line-active .ctp-text").getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.playState === "finished");
-  await (await page.$("#tab-renderer")).screenshot({ path: path.join(root, "scripts/verify-lyrics-oled-bounce.png") });
+  await page.waitForFunction(() => document.querySelector(".ctp-line-active .ctp-body").getAnimations().find(animation => animation.animationName === "ctp-lyric-bounce")?.playState === "finished");
+  if (!process.argv.includes("--no-screenshots")) {
+    await (await page.$("#tab-renderer")).screenshot({ path: path.join(root, "scripts/verify-lyrics-oled-bounce.png") });
+  }
   console.log("PASS: pure black, restrained springs, staggered words, panel-relative sizing, stable layout, and always-full motion despite legacy settings or system preferences.");
   await page.click('.ctp-line[data-index="2"]');
   assert.equal(await page.$eval("video", el => el.currentTime), 20);

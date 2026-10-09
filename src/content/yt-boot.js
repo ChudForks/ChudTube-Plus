@@ -35,6 +35,7 @@
   ];
   const bootState = {
     darkAttributes: [],
+    nativeDarkAttributes: new Map(themeAttributes.map((name) => [name, root.getAttribute(name)])),
     styles: new Map(),
   };
 
@@ -115,7 +116,10 @@
 
   function restoreBootTheme() {
     root.removeAttribute("data-ctp-theme");
-    for (const name of bootState.darkAttributes) root.removeAttribute(name);
+    for (const [name, value] of bootState.nativeDarkAttributes) {
+      if (value === null) root.removeAttribute(name);
+      else root.setAttribute(name, value);
+    }
     for (const [name, previous] of bootState.styles) {
       if (previous.value) root.style.setProperty(name, previous.value, previous.priority);
       else root.style.removeProperty(name);
