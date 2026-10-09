@@ -115,6 +115,11 @@ export function mergeCustomTheme(incoming) {
   return next;
 }
 
+export function youtubeThemePalette(youtube = {}) {
+  const preset = CUSTOM_THEME_PRESETS.find((item) => item.id === youtube.themePreset);
+  return mergeCustomTheme(preset?.colors || youtube.customTheme || OLED_PALETTE);
+}
+
 export function hexToRgb(hex) {
   const parsed = parseHexColor(hex);
   if (!parsed) return null;

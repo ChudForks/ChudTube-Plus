@@ -16,6 +16,7 @@ body {
 }
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
@@ -27,7 +28,7 @@ body {
 h1, h2, h3, p { margin: 0; }
 h1 { font-size: 18px; font-weight: 650; letter-spacing: -0.4px; }
 .brand p { color: var(--muted); font-size: 12px; }
-.top-actions { display: flex; align-items: center; gap: 12px; }
+.top-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .use-toggle { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
 input[type="checkbox"] { appearance: none; position: relative; width: 34px; height: 20px; flex: none; margin: 0; border: 1px solid #ffffff16; border-radius: 999px; background: #3c393e; cursor: pointer; }
 input[type="checkbox"]::after { content: ""; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: #eeebea; transition: transform 160ms ease; }

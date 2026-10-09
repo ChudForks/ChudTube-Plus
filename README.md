@@ -55,12 +55,12 @@ GitHub downloads cannot be installed in Chromium with one click; Chromium reserv
 
 ## Settings
 
-Click the ChudTube+ toolbar icon to change settings.
+Click the ChudTube+ toolbar icon to change settings. In the theme editor, choose **ChudTube**, **OLED**, **Slate**, or **Custom**, then click **Apply preset**. Applying a preset keeps your saved Custom colors intact, including after closing the editor or disabling and re-enabling the theme. To replace Custom with the colors in the preview, explicitly click **Save to Custom**.
 
 | Setting | Default | Effect |
 | --- | --- | --- |
-| YouTube → Themes → Custom theme | On (OLED) | Applies your saved YouTube theme |
-| YouTube → Themes → Edit colors | — | Opens the live color editor |
+| YouTube → Themes → YouTube theme | On (OLED) | Applies your chosen preset or saved Custom colors |
+| YouTube → Themes → Choose preset / Edit colors | — | Opens preset selection and the live color editor |
 | YouTube → Hide Shorts | Off | Removes Shorts from feeds and navigation |
 | YouTube → Hide Playables | Off | Removes Playables from feeds and navigation |
 | SponsorBlock → Skip categories | Button | Configure every category as Auto, Button, or Off |

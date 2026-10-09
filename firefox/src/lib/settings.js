@@ -1,4 +1,4 @@
-import { DEFAULT_CUSTOM_THEME, OLED_PALETTE, mergeCustomTheme } from "./theme.js";
+import { CUSTOM_THEME_PRESETS, DEFAULT_CUSTOM_THEME, OLED_PALETTE, mergeCustomTheme } from "./theme.js";
 
 export { DEFAULT_CUSTOM_THEME, mergeCustomTheme } from "./theme.js";
 
@@ -80,6 +80,7 @@ export const DEFAULT_SETTINGS = {
   },
   youtube: {
     theme: "custom",
+    themePreset: "custom",
     hideShorts: false,
     hidePlayables: false,
     customTheme: { ...OLED_PALETTE },
@@ -130,6 +131,9 @@ export function mergeSettings(stored) {
           : DEFAULT_SETTINGS.youtube.theme,
       hideShorts: incoming.youtube?.hideShorts ?? DEFAULT_SETTINGS.youtube.hideShorts,
       hidePlayables: incoming.youtube?.hidePlayables ?? DEFAULT_SETTINGS.youtube.hidePlayables,
+      themePreset: CUSTOM_THEME_PRESETS.some((preset) => preset.id === incoming.youtube?.themePreset)
+        ? incoming.youtube.themePreset
+        : DEFAULT_SETTINGS.youtube.themePreset,
       customTheme: migratedOledTheme && !hasPersonalizedTheme
         ? { ...OLED_PALETTE }
         : savedCustomTheme

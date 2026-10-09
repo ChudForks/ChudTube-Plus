@@ -4,6 +4,7 @@ import {
   customThemeCssVars,
   isDarkColor,
   mergeCustomTheme,
+  youtubeThemePalette,
   youtubeSpecVars,
 } from "../lib/theme.js";
 import "./sponsorblock.js";
@@ -60,7 +61,7 @@ globalThis.__ctpApplyYoutubeSettings = applyYoutubeSettings;
 
 function applyYoutubeSettings(settings) {
   const youtube = settings && typeof settings === "object" ? settings : {};
-  applyTheme(youtube.theme ?? "oled-black", youtube.customTheme);
+  applyTheme(youtube.theme ?? "oled-black", youtubeThemePalette(youtube));
   const root = document.documentElement;
   hideShorts = Boolean(youtube.hideShorts);
   hidePlayables = Boolean(youtube.hidePlayables);

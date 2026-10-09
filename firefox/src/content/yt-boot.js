@@ -63,7 +63,11 @@
       return;
     }
     if (youtube?.theme === "custom") {
-      applyCustomBoot(youtube.customTheme);
+      import(chrome.runtime.getURL("src/lib/theme.js")).then(({ youtubeThemePalette }) => {
+        // The controller may have loaded while the shared palette module was loading.
+        if (typeof globalThis.__ctpApplyYoutubeSettings === "function") return;
+        applyCustomBoot(youtubeThemePalette(youtube));
+      }).catch((error) => console.error("[ChudTube+] theme preset failed to load:", error));
     }
   });
 

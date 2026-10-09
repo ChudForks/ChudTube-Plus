@@ -1,5 +1,6 @@
 import { fetchLyrics } from "./lib/lrclib.js";
 import { SPONSOR_CATEGORIES, mergeSettings } from "./lib/settings.js";
+import { youtubeThemePalette } from "./lib/theme.js";
 
 const CACHE_PREFIX = "ctp-lyrics:";
 const SPONSOR_CACHE_PREFIX = "ctp-sponsorblock:v2:";
@@ -96,7 +97,7 @@ async function applyThemeToYoutubeTabs(youtube) {
         func: paintYoutubeTheme,
         args: [
           youtube?.theme || "oled-black",
-          youtube?.customTheme || null,
+          youtubeThemePalette(youtube),
           Boolean(youtube?.hideShorts),
           Boolean(youtube?.hidePlayables),
         ],

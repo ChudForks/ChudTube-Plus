@@ -5,6 +5,7 @@ import {
   SPONSOR_CATEGORIES,
   SPONSOR_SKIP_MODES,
 } from "../lib/settings.js";
+import { CUSTOM_THEME_PRESETS, youtubeThemePalette } from "../lib/theme.js";
 
 const MODE_LABELS = {
   auto: "Auto",
@@ -156,7 +157,9 @@ function renderSettings(next) {
   musicOledBlack.checked = next.ytm.theme === "oled-black";
   sponsorBlockShowSegmentColors.checked = Boolean(next.sponsorBlock.showSegmentColors);
   renderSponsorCategories(next.sponsorBlock.categories);
-  renderCustomSwatches(next.youtube.customTheme);
+  renderCustomSwatches(youtubeThemePalette(next.youtube));
+  const preset = CUSTOM_THEME_PRESETS.find((item) => item.id === next.youtube.themePreset);
+  document.getElementById("custom-theme-help").textContent = `${preset.label} colors. Choose a preset or edit your Custom colors.`;
 }
 
 function renderCustomSwatches(palette) {
