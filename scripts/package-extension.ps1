@@ -3,12 +3,15 @@ param(
 )
 
 $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$stagingPath = Join-Path ([System.IO.Path]::GetTempPath()) ("chudtube-plus-" + [guid]::NewGuid())
+$tempRoot = [System.IO.Path]::GetFullPath([System.IO.Path]::GetTempPath()).TrimEnd([System.IO.Path]::DirectorySeparatorChar)
+$stagingPath = [System.IO.Path]::GetFullPath((Join-Path $tempRoot ("chudtube-plus-" + [guid]::NewGuid())))
+if ([System.IO.Path]::GetDirectoryName($stagingPath) -ne $tempRoot) { throw 'Staging path must be inside the temporary directory.' }
 $extensionPath = Join-Path $stagingPath 'ChudTube-Plus'
 
 try {
   New-Item -ItemType Directory -Path $extensionPath -Force | Out-Null
   Copy-Item -LiteralPath (Join-Path $projectRoot 'manifest.json') -Destination $extensionPath -Force
+  Copy-Item -LiteralPath (Join-Path $projectRoot 'PRIVACY.md') -Destination $extensionPath -Force
   Copy-Item -LiteralPath (Join-Path $projectRoot 'src') -Destination $extensionPath -Recurse -Force
   $iconsPath = Join-Path $extensionPath 'icons'
   New-Item -ItemType Directory -Path $iconsPath -Force | Out-Null

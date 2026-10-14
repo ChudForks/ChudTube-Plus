@@ -14,9 +14,13 @@
   <a href="#install">Install</a>
   &nbsp;·&nbsp;
   <a href="#features">Features</a>
+  &nbsp;·&nbsp;
+  <a href="PRIVACY.md">Privacy policy</a>
 </p>
 
 > **Experimental software.** Install only if you are comfortable enabling Developer mode in a Chromium browser. ChudTube+ is not distributed through the Chrome Web Store.
+
+A separate Firefox build lives in [`firefox/`](firefox/README.md). It has its own installation instructions and does not yet include all of the Chromium build's lyrics controls.
 
 ## Install
 
@@ -29,6 +33,8 @@
 5. Pin ChudTube+ from the browser toolbar, then visit [YouTube](https://www.youtube.com) or [YouTube Music](https://music.youtube.com).
 
 GitHub downloads cannot be installed in Chromium with one click; Chromium reserves that privilege for its extension store or managed-browser policies. The steps above are the supported direct-from-GitHub route and take about a minute. To update, download and extract the newest ZIP over a new folder, then choose **Reload** on the extension card.
+
+The release ZIP contains the code from its release tag. For changes on `master` that have not been released yet, clone or download the repository and load its root folder instead.
 
 ## Features
 
@@ -74,15 +80,23 @@ The **OLED Bounce** lyrics theme uses a pure-black panel, bold white active lyri
 
 ## Privacy and permissions
 
-ChudTube+ has no account, analytics, or extra trackers.
+Read the [privacy policy](PRIVACY.md) for the full data flows, storage details, and controls. ChudTube+ has no extension account, analytics, advertising trackers, or telemetry sent to the developer, but some features make third-party requests **by default**.
 
-- `storage` saves settings and cached lyrics locally.
-- `scripting` applies your theme to already-open YouTube tabs.
-- YouTube and YouTube Music permissions apply the extension where it is needed.
-- [LRCLIB](https://lrclib.net) is queried for lyrics when required.
-- [SponsorBlock](https://sponsor.ajay.app) is queried only for the optional skip features and markers.
+| Destination | What leaves your device | When |
+| --- | --- | --- |
+| [SponsorBlock](https://sponsor.ajay.app) | First four hexadecimal characters of the SHA-256 hash of the current video ID, `service=YouTube`, the eight supported categories, and `actionTypes=["skip"]` | For uncached videos while any category is Auto/Button or timeline markers are on; defaults are Button for every category and markers on |
+| [LRCLIB](https://lrclib.net) | Song title, artist, album when available, rounded duration when available, and application-identifying headers | For uncached songs while follow-along lyrics are on and the Chromium source is Automatic or LRCLIB; defaults are lyrics on and Automatic. Firefox queries LRCLIB while follow-along lyrics are on |
+| Browser sync provider | Saved theme colors/preset, content-filter settings, SponsorBlock options, and lyrics preferences supported by your build | When your browser supports and enables extension settings sync |
+| YouTube Music artwork host | Request for the artwork URL read from the page, sometimes at a larger image size | When the lyrics panel displays artwork |
 
-The SponsorBlock integration is read-only: it uses the recommended hash-prefix lookup and never submits segments, votes, view events, or user data. LRCLIB requests identify the client with its requested `Lrclib-Client` header.
+Network destinations also receive your connection's IP address and ordinary request metadata. The SponsorBlock hash prefix reduces how precisely a request identifies a video; it does not guarantee anonymity. ChudTube+ does not send SponsorBlock the full video ID, a SponsorBlock user ID, segment submissions, votes, or segment-view/skip reports. LRCLIB receives readable song metadata. Settings use `storage.sync`; lyrics and segment caches use `storage.local` and are not uploaded through settings sync.
+
+To stop SponsorBlock lookups, set **every category to Off** and turn **Show colored segment markers off**. To stop LRCLIB lookups, turn **Follow-along lyrics off**; on Chromium you can instead choose **YouTube Music** as the lyrics source. A Lyrics-tab source override takes precedence over the saved default for that tab. These changes stop new lookups; a request already in progress can finish. Browser settings control settings sync separately.
+
+- `storage` stores synced preferences and local caches.
+- `scripting` applies themes to already-open YouTube and YouTube Music tabs.
+- YouTube and YouTube Music host permissions let the extension read player/page information and modify those pages.
+- LRCLIB and SponsorBlock host permissions allow the lookups described above.
 
 ## For contributors
 
@@ -94,11 +108,14 @@ This is a Manifest V3 extension. Clone the repository, then use **Load unpacked*
 
 The command creates `ChudTube-Plus.zip`, containing only the installable extension files. Publishing a GitHub release automatically builds and attaches the same ZIP.
 
+The ZIP includes `PRIVACY.md`. To build the separate Firefox XPI from the repository root, run `./firefox/package-extension.ps1`; see the [Firefox README](firefox/README.md) for development and signing instructions.
+
 ## Project layout
 
 ```
 manifest.json                extension manifest
-src/background.js            service worker; LRCLIB fetch and cache
+PRIVACY.md                   privacy policy for both browser builds
+src/background.js            service worker; LRCLIB/SponsorBlock lookups and caches
 src/lib/settings.js          synced settings
 src/lib/theme.js             custom YouTube theme colors
 src/theme-editor/            color picker and live preview window
@@ -107,6 +124,7 @@ src/content/sponsorblock.js  read-only skip controller
 src/content/ytm.js           YouTube Music injection
 src/lib/youtube-lyrics.js    YouTube Music lyric normalization
 src/popup/                   toolbar popup
+firefox/                     separate Firefox manifest, source, and packaging
 ```
 
 ## License
